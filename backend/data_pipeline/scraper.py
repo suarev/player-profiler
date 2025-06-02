@@ -74,7 +74,13 @@ class PlayerDataScraper:
             
             # Reset index to get player names as column
             df = df.reset_index()
-            
+
+            #Replacing + with 'plus' because it causes errors
+            df.columns = [col.lower().replace(' ', '_').replace('+', 'plus').replace('-', '_') for col in df.columns]
+
+            df.columns = [f"{stat_type}_{col}" if col in ["season", "league", "team"] else col for col in df.columns]
+
+
             # Show what we found
             print(f"Found {len(df)} players with {len(df.columns)} columns")
             print(f"Sample columns: {list(df.columns)[:5]}...")
