@@ -7,6 +7,7 @@ load_dotenv()
 # Database configuration
 DATABASE_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
+    'port': os.getenv('DB_PORT', '5433'),
     'user': os.getenv('DB_USER', 'dev_user'),
     'password': os.getenv('DB_PASSWORD', 'dev_password'),
     'database': os.getenv('DB_NAME', 'player_profiler_db')
