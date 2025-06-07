@@ -12,7 +12,7 @@ export default function CustomCursor() {
     const handleMouseLeave = () => setIsHovering(false)
 
     const updateHoverElements = () => {
-      const hoverElements = document.querySelectorAll('a, .data-card, .position-column, button, .scroll-indicator')
+      const hoverElements = document.querySelectorAll('a, .data-card, .position-column, button, .scroll-prompt')
       
       hoverElements.forEach(elem => {
         elem.addEventListener('mouseenter', handleMouseEnter)

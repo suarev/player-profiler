@@ -6,24 +6,6 @@
 
 html {
   cursor: none;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #000;
-  color: #fff;
-  overflow-x: hidden;
-  height: 100vh;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  cursor: none;
   scroll-behavior: smooth;
 }
 
@@ -37,4 +19,18 @@ body {
 .home-section {
   height: 100vh;
   position: relative;
+}
+
+/* Parallax scroll effect for home section */
+@media (min-width: 768px) {
+  .home-section {
+    will-change: transform;
+    transition: transform 0.1s ease-out;
+  }
+}
+
+/* Page transitions */
+.positions-page {
+  position: relative;
+  will-change: transform;
 }

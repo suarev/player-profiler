@@ -11,7 +11,7 @@ const positions = [
     players: 127,
     profiles: 8,
     colorClass: 'forwards',
-    bgImage: '/images/positions/forward.png' // You'll need to add these images
+    bgImage: '/images/positions/forward.png'
   },
   {
     name: 'MIDFIELDERS',
@@ -42,39 +42,31 @@ const positions = [
   }
 ]
 
-export default function PositionsSection() {
-  const [showTitle, setShowTitle] = useState(true)
+interface PositionsSectionProps {
+  scrolled: boolean
+}
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowTitle(false)
-    }, 3000)
-
-    return () => clearTimeout(timer)
-  }, [])
-
+export default function PositionsSection({ scrolled }: PositionsSectionProps) {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
     <section id="positions" className="positions-page">
-      {/* Header */}
-      <header className="positions-header">
+      {/* Minimal Header */}
+      <header className={`positions-header ${scrolled ? 'visible' : ''}`}>
         <button onClick={scrollToTop} className="back-link">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
-          BACK TO HOME
+          <span>BACK</span>
         </button>
-        <div className="page-indicator">STEP 01 / 03</div>
+        
+        <div className="section-title">
+          <span className="title-text">SELECT YOUR POSITION</span>
+          <span className="title-accent">TO ANALYZE</span>
+        </div>
       </header>
-
-      {/* Page Title (shows initially, then fades) */}
-      <div className={`page-title ${!showTitle ? 'fade-out' : ''}`}>
-        <h1>SELECT YOUR POSITION</h1>
-        <p>Choose a position to explore player profiles</p>
-      </div>
 
       {/* Positions Container */}
       <div className="positions-container">

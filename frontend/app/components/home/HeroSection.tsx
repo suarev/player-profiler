@@ -18,14 +18,7 @@ export default function HeroSection() {
             See where every player sits in our data visualization to understand the full picture.
           </p>
           
-          <div className="cta-group">
-            <button 
-              onClick={() => document.getElementById('positions')?.scrollIntoView({ behavior: 'smooth' })}
-              className="cta-primary"
-            >
-              START ANALYSIS
-            </button>
-          </div>
+
         </div>
 
         {/* Right Side - Visual */}
