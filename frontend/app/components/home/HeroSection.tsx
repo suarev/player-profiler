@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import DataCards from './DataCards'
 
 export default function HeroSection() {
@@ -20,8 +19,12 @@ export default function HeroSection() {
           </p>
           
           <div className="cta-group">
-            <Link href="#analyze" className="cta-primary">START ANALYSIS</Link>
-            <Link href="#demo" className="cta-secondary">VIEW METHODOLOGY →</Link>
+            <button 
+              onClick={() => document.getElementById('positions')?.scrollIntoView({ behavior: 'smooth' })}
+              className="cta-primary"
+            >
+              START ANALYSIS
+            </button>
           </div>
         </div>
 
