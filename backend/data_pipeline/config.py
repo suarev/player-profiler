@@ -29,5 +29,5 @@ FBREF_STAT_TYPES = [
 ]
 
 # Leagues and seasons to scrape
-LEAGUES = ["ENG-Premier League"]
+LEAGUES = ["Big 5 European Leagues Combined"]
 SEASONS = ["2024-2025"]  # Current season
