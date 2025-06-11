@@ -122,7 +122,7 @@ class PlayerAnalyzer:
     def apply_algorithm(self, scores_df: pd.DataFrame, algorithm: str) -> pd.DataFrame:
         """Apply the selected algorithm to rank players"""
         score_cols = [col for col in scores_df.columns if col.endswith('_score')]
-        
+
         if algorithm == "weighted_score":
             # Simple sum of weighted scores
             scores_df['final_score'] = scores_df[score_cols].sum(axis=1)
@@ -149,9 +149,18 @@ class PlayerAnalyzer:
             
             scores_df.loc[~mask, 'final_score'] = 0
             scores_df.loc[mask, 'final_score'] = scores_df.loc[mask, score_cols].sum(axis=1)
-        
+
+        # NORMALIZE TO 0-100 RANGE
+        max_score = scores_df['final_score'].max()
+        min_score = scores_df['final_score'].min()
+
+        if max_score > min_score:
+            scores_df['final_score'] = ((scores_df['final_score'] - min_score) / (max_score - min_score)) * 100
+        else:
+            scores_df['final_score'] = 50  # All same score
+
         return scores_df.sort_values('final_score', ascending=False)
-    
+
     def get_recommendations(self, weights: Dict[str, float], algorithm: str = "weighted_score", limit: int = 3):
         """Get top player recommendations"""
         try:
@@ -159,7 +168,8 @@ class PlayerAnalyzer:
             ranked_df = self.apply_algorithm(scores_df, algorithm)
             
             recommendations = []
-            for _, player in ranked_df.head(limit).iterrows():
+            ranked_df = ranked_df.drop_duplicates(subset=['player_id'])
+            for _, player in ranked_df.head(limit).iterrows():  
                 # Get key stats for this player
                 player_data = self.df[self.df['player_id'] == player['player_id']].iloc[0]
                 

@@ -3,16 +3,22 @@ import { PlayerRecommendation } from '@/app/types/analysis'
 interface RecommendationsPanelProps {
   recommendations: PlayerRecommendation[]
   loading: boolean
+  variant?: 'primary' | 'secondary'
 }
 
-export default function RecommendationsPanel({ recommendations, loading }: RecommendationsPanelProps) {
-  // Show skeleton while loading
-  if (loading || recommendations.length === 0) {
+export default function RecommendationsPanel({ 
+  recommendations, 
+  loading, 
+  variant = 'primary' 
+}: RecommendationsPanelProps) {
+  
+  // Show skeleton while loading (only for primary variant)
+  if (loading && variant === 'primary') {
     return (
       <div className="recommendations-panel">
         <h2 className="panel-title">TOP MATCHES</h2>
         <div className="player-cards">
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="player-card skeleton">
               <div className="player-rank">{i}</div>
               <div className="player-info">
@@ -34,6 +40,27 @@ export default function RecommendationsPanel({ recommendations, loading }: Recom
     )
   }
 
+  // Secondary variant - more compact
+  if (variant === 'secondary') {
+    return (
+      <div className="secondary-player-cards">
+        {recommendations.map((player, index) => (
+          <div key={player.player_id} className="secondary-player-card">
+            <div className="secondary-rank">{index + 6}</div>
+            <div className="secondary-player-info">
+              <h4>{player.name}</h4>
+              <span className="secondary-team">{player.team}</span>
+            </div>
+            <div className="secondary-score">
+              <span className="secondary-score-value">{Math.round(player.match_score)}%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // Primary variant - full details
   return (
     <div className="recommendations-panel">
       <h2 className="panel-title">TOP MATCHES</h2>

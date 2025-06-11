@@ -18,9 +18,7 @@ export const analysisApi = {
 
   // Get player recommendations
   async getRecommendations(
-    weights: Record<string, number>, 
-    algorithm: string = 'weighted_score'
-  ): Promise<RecommendationResponse> {
+weights: Record<string, number>, algorithm: string = 'weighted_score', selectedLeagues?: string[]  ): Promise<RecommendationResponse> {
     const metricWeights: MetricWeight[] = Object.entries(weights).map(([metric, weight]) => ({
       metric,
       weight
@@ -34,7 +32,7 @@ export const analysisApi = {
       body: JSON.stringify({
         weights: metricWeights,
         algorithm,
-        limit: 3
+        limit: 10
       })
     })
 

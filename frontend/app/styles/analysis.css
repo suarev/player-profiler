@@ -454,3 +454,264 @@
 .sliders-grid::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
 }
+
+/* Updated Layout */
+.analysis-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding-top: 5rem;
+}
+
+/* First Page - Split Layout */
+.first-page {
+    min-height: 100vh;
+    display: flex;
+    padding: 2rem 3rem;
+    gap: 3rem;
+}
+
+.recommendations-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.preferences-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Secondary Recommendations */
+.secondary-recommendations {
+    margin-top: auto;
+}
+
+.secondary-title {
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1rem;
+}
+
+.secondary-player-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.secondary-player-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.8rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.secondary-player-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 107, 107, 0.2);
+    transform: translateX(3px);
+}
+
+.secondary-rank {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: rgba(255, 107, 107, 0.15);
+    min-width: 25px;
+}
+
+.secondary-player-info {
+    flex: 1;
+}
+
+.secondary-player-info h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.1rem;
+}
+
+.secondary-team {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.secondary-score {
+    text-align: right;
+}
+
+.secondary-score-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: rgba(255, 107, 107, 0.8);
+}
+
+/* Second Page - Full Screen PCA */
+.second-page {
+    min-height: 100vh;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.second-page .pca-header {
+    margin-bottom: 2rem;
+}
+
+.second-page .pca-container {
+    flex: 1;
+    min-height: 80vh;
+}
+
+/* Remove old layout styles */
+.top-section {
+    display: none;
+}
+
+.pca-section {
+    display: none;
+}
+
+/* Update preferences panel to use full height */
+.preferences-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.preferences-panel .sliders-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem 3rem;
+    flex: 1;
+    overflow-y: visible;
+    padding-right: 0;
+}
+
+/* League Filter Styles */
+.league-filter-wrapper {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.filter-title {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 1rem;
+}
+
+.selected-leagues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.all-leagues-tag {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.league-tag {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.remove-league {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.remove-league:hover {
+  color: #ff6b6b;
+}
+
+.league-dropdown {
+  position: relative;
+}
+
+.league-dropdown-trigger {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.8rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.league-dropdown-trigger:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.league-dropdown-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: none;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.select-all-btn {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: rgba(255, 107, 107, 0.1);
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+
+.select-all-btn:hover {
+  background: rgba(255, 107, 107, 0.2);
+}
+
+.league-option {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.league-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.league-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #ff6b6b;
+}

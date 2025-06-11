@@ -4,20 +4,14 @@ FORWARD_METRICS = {
         "name": "Finishing",
         "description": "Goals, xG conversion rate",
         "columns": [
-            "performance_gls",
-            "performance_g_pk", 
-            "expected_xg",
-            "expected_g_xg",
-            "standard_g_per_sh",
-            "standard_sotpct"
+            "performance_gls", 
+            "expected_npxg",
+            "expected_npxg_per_sh"
         ],
         "weights": {  # Internal weights for combining columns
-            "performance_gls": 0.3,
-            "performance_g_pk": 0.2,
-            "expected_xg": 0.2,
-            "expected_g_xg": 0.1,
-            "standard_g_per_sh": 0.1,
-            "standard_sotpct": 0.1
+            "performance_gls": 0.4,
+            "expected_npxg": 0.4,
+            "expected_npxg_per_sh": 0.2,
         }
     },
     "physical": {
@@ -28,8 +22,8 @@ FORWARD_METRICS = {
             "aerial_duels_won"
         ],
         "weights": {
-            "aerial_duels_wonpct": 0.6,
-            "aerial_duels_won": 0.4
+            "aerial_duels_wonpct": 0.3,
+            "aerial_duels_won": 0.7
         }
     },
     "creativity": {
@@ -39,15 +33,13 @@ FORWARD_METRICS = {
             "performance_ast",
             "expected_xag",
             "kp",
-            "ppa",
-            "sca_sca90"
+            "sca_sca"
         ],
         "weights": {
-            "performance_ast": 0.3,
-            "expected_xag": 0.25,
+            "performance_ast": 0.2,
+            "expected_xag": 0.3,
             "kp": 0.2,
-            "ppa": 0.15,
-            "sca_sca90": 0.1
+            "sca_sca": 0.3
         }
     },
     "pace_dribbling": {
@@ -55,15 +47,15 @@ FORWARD_METRICS = {
         "description": "Take-ons, progressive carries",
         "columns": [
             "take_ons_succ",
-            "take_ons_succpct",
             "carries_prgc",
-            "carries_prgdist"
+            "carries_cpa",
+            "carries_1_per_3"
         ],
         "weights": {
-            "take_ons_succ": 0.3,
-            "take_ons_succpct": 0.3,
-            "carries_prgc": 0.2,
-            "carries_prgdist": 0.2
+            "take_ons_succ": 0.4,
+            "carries_prgc": 0.3,
+            "carries_cpa":0.2,
+            "carries_1_per_3":0.1
         }
     },
     "work_rate": {
@@ -71,45 +63,13 @@ FORWARD_METRICS = {
         "description": "Pressing, defensive actions",
         "columns": [
             "performance_recov",
-            "tackles_tkl",
-            "int",
-            "performance_fls"
+            "tackles_att_3rd",
+            "blocks_pass"
         ],
         "weights": {
-            "performance_recov": 0.4,
-            "tackles_tkl": 0.3,
-            "int": 0.2,
-            "performance_fls": 0.1
-        }
-    },
-    "positioning": {
-        "name": "Positioning",
-        "description": "Box presence, shot locations",
-        "columns": [
-            "touches_att_pen",
-            "touches_att_3rd",
-            "standard_sh_per_90"
-        ],
-        "weights": {
-            "touches_att_pen": 0.5,
-            "touches_att_3rd": 0.3,
-            "standard_sh_per_90": 0.2
-        }
-    },
-    "linkup": {
-        "name": "Link-up Play",
-        "description": "Passing accuracy, combination play",
-        "columns": [
-            "total_cmppct",
-            "short_cmppct",
-            "medium_cmppct",
-            "ast"
-        ],
-        "weights": {
-            "total_cmppct": 0.3,
-            "short_cmppct": 0.3,
-            "medium_cmppct": 0.2,
-            "ast": 0.2
+            "performance_recov": 0.3,
+            "tackles_att_3rd": 0.6,
+            "blocks_pass": 0.1
         }
     }
 }

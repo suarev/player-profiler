@@ -20,6 +20,7 @@ export default function ForwardAnalysisPage() {
   const [recommendations, setRecommendations] = useState<PlayerRecommendation[]>([])
   const [loading, setLoading] = useState(false)
   const [pcaData, setPcaData] = useState<PCAData | null>(null)
+  
 
   // Load metrics on mount
   useEffect(() => {
@@ -87,33 +88,49 @@ export default function ForwardAnalysisPage() {
   }
 
   return (
-    <div className="analysis-page">
-      {/* Custom Cursor */}
-      <CustomCursor />
+  <div className="analysis-page">
+    {/* Custom Cursor */}
+    <CustomCursor />
 
-      {/* Film Grain Effect */}
-      <FilmGrain />
+    {/* Film Grain Effect */}
+    <FilmGrain />
 
-      {/* Background */}
-      <div className="analysis-bg" />
+    {/* Background */}
+    <div className="analysis-bg" />
 
-      {/* Header */}
-      <AnalysisHeader 
-        position="FORWARDS" 
-        playerCount={127} 
-      />
+    {/* Header */}
+    <AnalysisHeader 
+      position="FORWARDS" 
+      playerCount={127} 
+    />
 
-      {/* Main Container */}
-      <div className="analysis-container">
-        {/* Top Section */}
-        <div className="top-section">
-          {/* Recommendations Panel */}
+    {/* Main Container */}
+    <div className="analysis-container">
+      {/* First Page - Recommendations and Sliders */}
+      <div className="first-page">
+        {/* Left Side - Recommendations */}
+        <div className="recommendations-side">
           <RecommendationsPanel 
-            recommendations={recommendations}
+            recommendations={recommendations.slice(0, 5)}
             loading={loading}
+            variant="primary"
           />
+          
+          {/* Secondary Recommendations */}
+          {recommendations.length > 5 && (
+            <div className="secondary-recommendations">
+              <h3 className="secondary-title">NEXT BEST MATCHES</h3>
+              <RecommendationsPanel 
+                recommendations={recommendations.slice(5, 10)}
+                loading={false}
+                variant="secondary"
+              />
+            </div>
+          )}
+        </div>
 
-          {/* Preferences Panel */}
+        {/* Right Side - Preferences */}
+        <div className="preferences-side">
           <PreferencesPanel
             metrics={metrics}
             weights={weights}
@@ -122,23 +139,24 @@ export default function ForwardAnalysisPage() {
             onAlgorithmChange={setAlgorithm}
           />
         </div>
+      </div>
 
-        {/* Bottom Section - PCA */}
-        <div className="pca-section">
-          <div className="pca-header">
-            <h2 className="panel-title">FORWARD LANDSCAPE — STATISTICAL CLUSTERING</h2>
-            <div className="pca-controls">
-              <button className="pca-button">RESET VIEW</button>
-              <button className="pca-button">HIGHLIGHT SIMILAR</button>
-            </div>
+      {/* Second Page - PCA Visualization */}
+      <div className="second-page">
+        <div className="pca-header">
+          <h2 className="panel-title">FORWARD LANDSCAPE — STATISTICAL CLUSTERING</h2>
+          <div className="pca-controls">
+            <button className="pca-button">RESET VIEW</button>
+            <button className="pca-button">HIGHLIGHT SIMILAR</button>
           </div>
-          
-          <PCAVisualization 
-            data={pcaData}
-            highlightedPlayers={recommendations.map(r => r.player_id)}
-          />
         </div>
+        
+        <PCAVisualization 
+          data={pcaData}
+          highlightedPlayers={recommendations.map(r => r.player_id)}
+        />
       </div>
     </div>
-  )
+  </div>
+)
 }
