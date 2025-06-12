@@ -10,67 +10,55 @@ class PlayerAnalyzer:
         self._load_data()
         
     def _load_data(self):
-        """Load all forward data and compute percentiles"""
+        """Load all forward data with precomputed percentiles"""
         try:
-            # Get all forwards with their stats
+            # Get forwards with their precomputed percentiles AND stats
             query = """
             SELECT 
                 p.id as player_id,
                 p.name,
                 p.team,
                 p.position,
-                p.age
+                p.age,
+                pp.percentiles,
+                s.performance_gls,
+                s.performance_ast,
+                s.expected_xg,
+                sh.standard_sh,
+                pos.touches_att_pen
             FROM football_data.players p
-            WHERE p.position LIKE '%FW%' OR p.position LIKE '%CF%' OR p.position LIKE '%LW%' OR p.position LIKE '%RW%'
+            JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
+            LEFT JOIN football_data.player_standard_stats s ON p.name = s.player
+            LEFT JOIN football_data.player_shooting_stats sh ON p.name = sh.player
+            LEFT JOIN football_data.player_possession_stats pos ON p.name = pos.player
+            WHERE pp.position_group = 'forward'
             """
             
-            # First try to get basic player info
             self.df = execute_query(query)
             
-            # Then try to join stats tables if they exist
-            stats_tables = [
-                ("player_standard_stats", "s"),
-                ("player_shooting_stats", "sh"),
-                ("player_passing_stats", "ps"),
-                ("player_passing_types_stats", "pt"),
-                ("player_goal_shot_creation_stats", "gsc"),
-                ("player_defense_stats", "d"),
-                ("player_possession_stats", "pos"),
-                ("player_misc_stats", "m"),
-                ("player_playing_time_stats", "pl")
-            ]
+            # Expand the JSON percentiles into columns
+            if not self.df.empty and 'percentiles' in self.df.columns:
+                import json
+                
+                # Parse JSON and create percentile columns
+                for idx, row in self.df.iterrows():
+                    percentiles = json.loads(row['percentiles']) if isinstance(row['percentiles'], str) else row['percentiles']
+                    for key, value in percentiles.items():
+                        self.df.at[idx, f"{key}_pct"] = value
+                
+            print(f"Loaded {len(self.df)} forwards with precomputed percentiles")
             
-            for table, alias in stats_tables:
-                try:
-                    stats_query = f"""
-                    SELECT p.name, {alias}.*
-                    FROM football_data.players p
-                    JOIN football_data.{table} {alias} ON p.name = {alias}.player
-                    WHERE p.position LIKE '%FW%' OR p.position LIKE '%CF%' OR p.position LIKE '%LW%' OR p.position LIKE '%RW%'
-                    """
-                    stats_df = execute_query(stats_query)
-                    if not stats_df.empty:
-                        self.df = self.df.merge(stats_df, on='name', how='left', suffixes=('', '_dup'))
-                        # Drop duplicate columns
-                        self.df = self.df.loc[:, ~self.df.columns.str.endswith('_dup')]
-                except Exception as e:
-                    print(f"Warning: Could not load {table}: {e}")
-            
-            print(f"Loaded {len(self.df)} forwards")
-            self._compute_percentiles()
+            # Convert numeric columns
+            numeric_cols = ['performance_gls', 'performance_ast', 'expected_xg', 'n_90s', 'standard_sh', 'touches_att_pen']
+            for col in numeric_cols:
+                if col in self.df.columns:
+                    self.df[col] = pd.to_numeric(self.df[col], errors='coerce').fillna(0)
             
         except Exception as e:
             print(f"Error loading data: {e}")
-            # Create a minimal DataFrame for testing
-            self.df = pd.DataFrame({
-                'player_id': [1, 2, 3],
-                'name': ['Test Player 1', 'Test Player 2', 'Test Player 3'],
-                'team': ['Team A', 'Team B', 'Team C'],
-                'position': ['FW', 'FW', 'FW'],
-                'age': [25, 28, 23]
-            })
-            print("Using test data for now")
-        
+            # Fallback
+            self._load_data_fallback()
+                
     def _compute_percentiles(self):
         """Compute percentile ranks for all numeric columns"""
         # First, identify truly numeric columns by trying to convert them
@@ -89,7 +77,7 @@ class PlayerAnalyzer:
             if col not in ['player_id', 'id', 'age']:
                 # Create percentile column
                 self.df[f"{col}_pct"] = self.df[col].rank(pct=True, na_option='keep') * 100
-                
+
     def calculate_metric_scores(self, metric_weights: Dict[str, float]) -> pd.DataFrame:
         """Calculate composite scores for each metric based on user preferences"""
         scores_df = self.df[['player_id', 'name', 'team', 'position', 'age']].copy()
@@ -99,7 +87,7 @@ class PlayerAnalyzer:
                 metric_info = FORWARD_METRICS[metric_id]
                 
                 # Calculate composite score for this metric
-                metric_score = 0
+                metric_score = pd.Series([0] * len(self.df), index=self.df.index)
                 valid_cols = 0
                 
                 for col, col_weight in metric_info['weights'].items():
@@ -112,53 +100,27 @@ class PlayerAnalyzer:
                 
                 # If no valid columns found, use a default score
                 if valid_cols == 0:
+                    print(f"Warning: No percentile data found for metric {metric_id}")
                     metric_score = pd.Series([50] * len(self.df), index=self.df.index)
                 
-                # Apply user weight (convert from 0-100 to 0-1)
+                # Apply user weight (0-100 scale)
+                # If user_weight is 0, the metric won't contribute
                 scores_df[f"{metric_id}_score"] = metric_score * (user_weight / 100)
         
-        return scores_df
-    
+        return scores_df            
+        
     def apply_algorithm(self, scores_df: pd.DataFrame, algorithm: str) -> pd.DataFrame:
         """Apply the selected algorithm to rank players"""
         score_cols = [col for col in scores_df.columns if col.endswith('_score')]
-
+        
         if algorithm == "weighted_score":
             # Simple sum of weighted scores
             scores_df['final_score'] = scores_df[score_cols].sum(axis=1)
             
-        elif algorithm == "multiplicative":
-            # Multiplicative - penalizes low scores
-            # Normalize to 0-1 first to avoid huge numbers
-            normalized = scores_df[score_cols] / 100
-            scores_df['final_score'] = normalized.prod(axis=1) * 1000  # Scale back up
-            
-        elif algorithm == "threshold":
-            # Filter players below 30th percentile in any heavily weighted metric
-            # Then apply weighted scoring
-            mask = pd.Series(True, index=scores_df.index)
-            
-            # Check each metric's weight from the original input
-            for col in score_cols:
-                metric_name = col.replace('_score', '')
-                # Get the original weight for this metric (it's already applied in the score)
-                # We'll consider metrics with score > 50 as "important"
-                max_possible_score = 100  # Since we normalized to percentiles
-                if scores_df[col].max() > 50:  # If any player has > 50 in this metric, it's weighted highly
-                    mask &= (scores_df[col] > 30)
-            
-            scores_df.loc[~mask, 'final_score'] = 0
-            scores_df.loc[mask, 'final_score'] = scores_df.loc[mask, score_cols].sum(axis=1)
-
-        # NORMALIZE TO 0-100 RANGE
-        max_score = scores_df['final_score'].max()
-        min_score = scores_df['final_score'].min()
-
-        if max_score > min_score:
-            scores_df['final_score'] = ((scores_df['final_score'] - min_score) / (max_score - min_score)) * 100
-        else:
-            scores_df['final_score'] = 50  # All same score
-
+            # Scale to a more meaningful range (0-1000)
+            max_possible = len(score_cols) * 100  # If all metrics at 100
+            scores_df['final_score'] = (scores_df['final_score'] / max_possible) * 1000
+        
         return scores_df.sort_values('final_score', ascending=False)
 
     def get_recommendations(self, weights: Dict[str, float], algorithm: str = "weighted_score", limit: int = 3):

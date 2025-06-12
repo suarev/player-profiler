@@ -52,7 +52,7 @@ export default function RecommendationsPanel({
               <span className="secondary-team">{player.team}</span>
             </div>
             <div className="secondary-score">
-              <span className="secondary-score-value">{Math.round(player.match_score)}%</span>
+             <span className="secondary-score-value">{player.match_score.toFixed(1)}</span>
             </div>
           </div>
         ))}
@@ -87,7 +87,7 @@ export default function RecommendationsPanel({
               </div>
             </div>
             <div className="match-score">
-              <div className="score-value">{Math.round(player.match_score)}%</div>
+              <div className="score-value">{player.match_score.toFixed(1)}</div>
               <div className="score-label">MATCH</div>
             </div>
           </div>

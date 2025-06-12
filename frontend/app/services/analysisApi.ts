@@ -18,12 +18,15 @@ export const analysisApi = {
 
   // Get player recommendations
   async getRecommendations(
-weights: Record<string, number>, algorithm: string = 'weighted_score', selectedLeagues?: string[]  ): Promise<RecommendationResponse> {
-    const metricWeights: MetricWeight[] = Object.entries(weights).map(([metric, weight]) => ({
-      metric,
-      weight
-    }))
+  weights: Record<string, number>, 
+  algorithm: string = 'weighted_score'
+): Promise<RecommendationResponse> {
+  const metricWeights: MetricWeight[] = Object.entries(weights).map(([metric, weight]) => ({
+    metric,
+    weight
+  }))
 
+  try {
     const response = await fetch(`${API_BASE_URL}/api/forwards/recommend`, {
       method: 'POST',
       headers: {
@@ -36,9 +39,18 @@ weights: Record<string, number>, algorithm: string = 'weighted_score', selectedL
       })
     })
 
-    if (!response.ok) throw new Error('Failed to get recommendations')
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('API Error:', errorText)
+      throw new Error(`Failed to get recommendations: ${response.status}`)
+    }
+    
     return response.json()
-  },
+  } catch (error) {
+    console.error('Request failed:', error)
+    throw error
+  }
+},
 
   // Get PCA visualization data
   async getPCAData(): Promise<PCAData> {

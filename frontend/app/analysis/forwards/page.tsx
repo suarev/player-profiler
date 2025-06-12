@@ -34,7 +34,7 @@ export default function ForwardAnalysisPage() {
       const data = await analysisApi.getForwardMetrics()
       setMetrics(data)
       
-      // Initialize weights to 50 for all metrics
+      // Initialize to 50, but user can change to 0
       const initialWeights: Record<string, number> = {}
       data.forEach(metric => {
         initialWeights[metric.id] = 50

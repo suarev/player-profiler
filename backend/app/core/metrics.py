@@ -71,6 +71,16 @@ FORWARD_METRICS = {
             "tackles_att_3rd": 0.6,
             "blocks_pass": 0.1
         }
+    },
+    "box_presence": {
+        "name": "Box Presence",
+        "description": "Touches in Penalty Area",
+        "columns": [
+            "touches_att_pen"
+        ],
+        "weights": {
+            "touches_att_pen":1.0
+        }
     }
 }
 
@@ -79,13 +89,5 @@ ALGORITHMS = {
     "weighted_score": {
         "name": "Weighted Score",
         "description": "Balanced approach - combines all metrics based on your preferences"
-    },
-    "multiplicative": {
-        "name": "Multiplicative Scoring", 
-        "description": "Punishes weaknesses - better for finding complete players"
-    },
-    "threshold": {
-        "name": "Threshold + Weighted",
-        "description": "Ensures minimum standards - filters then ranks"
     }
 }

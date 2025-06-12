@@ -1,5 +1,5 @@
 """
-Script to precompute percentile ranks for all players
+Script to precompute percentile ranks for ALL players and ALL metrics
 Run this after scraping new data
 """
 import sys
@@ -18,71 +18,54 @@ from app.core.database import engine, execute_query
 def precompute_percentiles():
     """Compute and store percentile ranks for all positions"""
     
-    print("Computing percentiles for forwards...")
+    print("Computing percentiles for all players and all metrics...")
     
-    # Get all forward stats
+    # Get all players with ALL their stats
     query = """
     SELECT 
         p.id as player_id,
         p.name,
         p.team,
         p.position,
-        s.n_90s,
-        s.performance_gls,
-        s.performance_ast,
-        s.expected_xg,
-        s.expected_xag,
-        sh.standard_sh,
-        sh.standard_sot,
-        sh.standard_sotpct,
-        ps.total_cmppct,
-        ps.kp,
-        ps.ppa,
-        gsc.sca_sca90,
-        d.tackles_tkl,
-        d.int,
-        pos.touches_att_pen,
-        pos.touches_att_3rd,
-        pos.take_ons_succ,
-        pos.take_ons_succpct,
-        pos.carries_prgc,
-        pos.carries_prgdist,
-        m.aerial_duels_wonpct,
-        m.aerial_duels_won,
-        m.performance_recov
+        s.*,
+        sh.*,
+        ps.*,
+        pt.*,
+        gsc.*,
+        d.*,
+        pos.*,
+        m.*,
+        pl.*
     FROM football_data.players p
     LEFT JOIN football_data.player_standard_stats s ON p.name = s.player
     LEFT JOIN football_data.player_shooting_stats sh ON p.name = sh.player
     LEFT JOIN football_data.player_passing_stats ps ON p.name = ps.player
+    LEFT JOIN football_data.player_passing_types_stats pt ON p.name = pt.player
     LEFT JOIN football_data.player_goal_shot_creation_stats gsc ON p.name = gsc.player
     LEFT JOIN football_data.player_defense_stats d ON p.name = d.player
     LEFT JOIN football_data.player_possession_stats pos ON p.name = pos.player
     LEFT JOIN football_data.player_misc_stats m ON p.name = m.player
-    WHERE p.position LIKE '%FW%' OR p.position LIKE '%CF%' OR p.position LIKE '%LW%' OR p.position LIKE '%RW%'
-    AND s.n_90s IS NOT NULL AND CAST(s.n_90s AS FLOAT) > 5  -- Min 5 90s played
+    LEFT JOIN football_data.player_playing_time_stats pl ON p.name = pl.player
     """
     
     df = execute_query(query)
-    print(f"Found {len(df)} forwards with sufficient playing time")
+    print(f"Found {len(df)} players with sufficient playing time")
+    print(f"Total columns: {len(df.columns)}")
     
-    # Convert numeric columns
-    numeric_cols = df.columns.drop(['player_id', 'name', 'team', 'position'])
-    for col in numeric_cols:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
-    
-    # Compute percentiles
-    percentiles_df = df[['player_id', 'name', 'team']].copy()
-    
-    for col in numeric_cols:
-        if col != 'n_90s':  # Don't compute percentile for minutes played
-            percentiles_df[f"{col}_pct"] = df[col].rank(pct=True, na_option='keep') * 100
+    # Identify position groups
+    position_groups = {
+        'forward': df[df['position'].str.contains('FW|CF|LW|RW', na=False)].copy(),
+        'midfielder': df[df['position'].str.contains('MF|CM|DM|AM|LM|RM', na=False)].copy(),
+        'defender': df[df['position'].str.contains('DF|CB|LB|RB|WB', na=False)].copy(),
+        'goalkeeper': df[df['position'].str.contains('GK', na=False)].copy()
+    }
     
     # Create percentiles table
     create_table_sql = """
-    CREATE TABLE IF NOT EXISTS football_data.player_percentiles (
+    CREATE TABLE IF NOT EXISTS football_data.player_percentiles_all (
         player_id INTEGER PRIMARY KEY,
         position_group VARCHAR(20),
-        data JSONB,
+        percentiles JSONB,
         computed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """
@@ -90,34 +73,99 @@ def precompute_percentiles():
     with engine.begin() as conn:
         conn.execute(text(create_table_sql))
     
-    # Store percentiles as JSON for each player
-    print("Storing percentiles in database...")
-    stored = 0
+    # Process each position group
+    for position_group, group_df in position_groups.items():
+        if len(group_df) == 0:
+            continue
+            
+        print(f"\nProcessing {position_group}s ({len(group_df)} players)...")
+        
+        # Get numeric columns (exclude IDs, names, etc.)
+        exclude_cols = ['player_id', 'id', 'name', 'team', 'position', 'age', 'born', 
+                       'nation', 'league', 'season', 'player', 'created_at']
+        
+        numeric_cols = []
+        for col in group_df.columns:
+            if col not in exclude_cols:
+                try:
+                    # Try to convert to numeric
+                    group_df.loc[:, col] = pd.to_numeric(group_df[col], errors='coerce')
+                    # Only keep if it has some numeric values
+                    if group_df[col].notna().sum() > 0:
+                        numeric_cols.append(col)
+                except:
+                    pass
+        
+        print(f"Found {len(numeric_cols)} numeric columns to compute percentiles for")
+        
+        # Compute percentiles for each numeric column
+        stored_count = 0
+        
+        for idx, (_, player) in enumerate(group_df.iterrows()):
+            player_percentiles = {}
+            
+            for col in numeric_cols:
+                # Get this player's value
+                player_value = player[col]
+                
+                if pd.notna(player_value):
+                    # Calculate percentile rank
+                    values = group_df[col].dropna()
+                    if len(values) > 0:
+                        percentile = (values < player_value).sum() / len(values) * 100
+                        player_percentiles[col] = round(percentile, 2)
+                    else:
+                        player_percentiles[col] = 50.0  # Default to middle
+                else:
+                    player_percentiles[col] = None
+            
+            # Store in database
+            insert_sql = """
+            INSERT INTO football_data.player_percentiles_all (player_id, position_group, percentiles)
+            VALUES (:player_id, :position_group, :percentiles)
+            ON CONFLICT (player_id) DO UPDATE
+            SET percentiles = EXCLUDED.percentiles, 
+                position_group = EXCLUDED.position_group,
+                computed_at = CURRENT_TIMESTAMP
+            """
+            
+            try:
+                with engine.begin() as conn:
+                    conn.execute(text(insert_sql), {
+                        'player_id': int(player['player_id']),
+                        'position_group': position_group,
+                        'percentiles': json.dumps(player_percentiles)
+                    })
+                stored_count += 1
+                
+                # Progress indicator
+                if (idx + 1) % 100 == 0:
+                    print(f"  Processed {idx + 1}/{len(group_df)} {position_group}s...", end='\r')
+                    
+            except Exception as e:
+                print(f"\n  Error storing player {player['name']}: {e}")
+                continue
+        
+        print(f"\n✅ Computed and stored percentiles for {stored_count} {position_group}s")
     
-    for _, player in percentiles_df.iterrows():
-        player_data = {
-            col: float(player[col]) if pd.notna(player[col]) else None
-            for col in player.index if col.endswith('_pct')
-        }
-        
-        insert_sql = """
-        INSERT INTO football_data.player_percentiles (player_id, position_group, data)
-        VALUES (%(player_id)s, %(position_group)s, %(data)s)
-        ON CONFLICT (player_id) DO UPDATE
-        SET data = EXCLUDED.data, computed_at = CURRENT_TIMESTAMP
-        """
-        
-        with engine.connect() as conn:
-            conn.execute(insert_sql, {
-                'player_id': int(player['player_id']),
-                'position_group': 'forward',
-                'data': json.dumps(player_data)
-            })
-            conn.commit()
-        
-        stored += 1
+    # Show sample of what was computed
+    print("\n📊 Sample percentiles stored:")
+    sample_query = """
+    SELECT p.name, pp.position_group, 
+           jsonb_object_keys(pp.percentiles) as metric
+    FROM football_data.player_percentiles_all pp
+    JOIN football_data.players p ON pp.player_id = p.id
+    LIMIT 5
+    """
     
-    print(f"✅ Stored percentiles for {stored} forwards")
+    try:
+        sample_df = execute_query(sample_query)
+        print(f"Sample data: {sample_df.head()}")
+    except:
+        print("Could not fetch sample data")
+    
+    print("\n✅ All percentiles computed successfully!")
+    print("You can now use ANY metric in your analysis!")
 
 if __name__ == "__main__":
     precompute_percentiles()
