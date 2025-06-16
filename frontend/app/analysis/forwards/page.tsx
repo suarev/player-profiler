@@ -22,7 +22,7 @@ export default function ForwardAnalysisPage() {
   const [pcaData, setPcaData] = useState<PCAData | null>(null)
   
 
-  // Load metrics on mount
+// Load metrics on mount
   useEffect(() => {
     loadMetrics()
     loadPCAData()
@@ -34,7 +34,7 @@ export default function ForwardAnalysisPage() {
       const data = await analysisApi.getForwardMetrics()
       setMetrics(data)
       
-      // Initialize to 50, but user can change to 0
+      // Initialize to 50
       const initialWeights: Record<string, number> = {}
       data.forEach(metric => {
         initialWeights[metric.id] = 50

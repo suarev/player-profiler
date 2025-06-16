@@ -141,8 +141,8 @@ class PlayerAnalyzer:
                 
                 key_stats = {
                     "goals": float(player_data.get('performance_gls', 0)) if pd.notna(player_data.get('performance_gls')) else 0.0,
-                    "xG/90": float(player_data.get('expected_xg', 0)) / n_90s if pd.notna(player_data.get('expected_xg')) else 0.0,
-                    "shots/90": float(player_data.get('standard_sh', 0)) / n_90s if pd.notna(player_data.get('standard_sh')) else 0.0,
+                    "xG": float(player_data.get('expected_xg', 0)) if pd.notna(player_data.get('expected_xg')) else 0.0,
+                    "shots": float(player_data.get('standard_sh', 0)) if pd.notna(player_data.get('standard_sh')) else 0.0,
                     "assists": float(player_data.get('performance_ast', 0)) if pd.notna(player_data.get('performance_ast')) else 0.0
                 }
                 

@@ -77,12 +77,16 @@ export default function RecommendationsPanel({
                   <span className="mini-stat-label">goals</span>
                 </div>
                 <div className="mini-stat">
-                  <span className="mini-stat-value">{player.key_stats['xG/90'].toFixed(2)}</span>
-                  <span className="mini-stat-label">xG/90</span>
+                  <span className="mini-stat-value">{player.key_stats.xG.toFixed(1)}</span>
+                  <span className="mini-stat-label">xG</span>
                 </div>
                 <div className="mini-stat">
-                  <span className="mini-stat-value">{player.key_stats['shots/90'].toFixed(1)}</span>
-                  <span className="mini-stat-label">shots/90</span>
+                  <span className="mini-stat-value">{player.key_stats.shots}</span>
+                  <span className="mini-stat-label">shots</span>
+                </div>
+                  <div className="mini-stat">
+                  <span className="mini-stat-value">{player.key_stats.assists}</span>
+                  <span className="mini-stat-label">assists</span>
                 </div>
               </div>
             </div>

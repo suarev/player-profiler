@@ -20,8 +20,8 @@ export interface PlayerRecommendation {
   match_score: number
   key_stats: {
     goals: number
-    'xG/90': number
-    'shots/90': number
+    xG: number
+    shots: number
     assists: number
   }
   percentile_ranks: Record<string, number>
