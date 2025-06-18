@@ -702,3 +702,131 @@
   height: 16px;
   accent-color: #ff6b6b;
 }
+
+/* Zoom Controls - Add to frontend/app/styles/analysis.css */
+
+/* Zoom control buttons */
+.zoom-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 10;
+}
+
+.zoom-btn {
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.zoom-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
+}
+
+.zoom-btn:active {
+    transform: scale(0.95);
+}
+
+.zoom-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+/* Zoom indicator */
+.zoom-indicator {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+}
+
+/* Updated PCA container for better interaction */
+.pca-container {
+    cursor: grab;
+}
+
+.pca-container:active {
+    cursor: grabbing;
+}
+
+/* Disable text selection during pan */
+.pca-container.panning {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Overview mini-map (optional enhancement) */
+.pca-overview {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 150px;
+    height: 100px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.overview-viewport {
+    position: absolute;
+    border: 2px solid #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    pointer-events: none;
+}
+
+/* Smooth transitions for zoom */
+.pca-canvas .pca-point,
+.pca-canvas .cluster-labels text,
+.pca-canvas .player-labels text {
+    transition: none; /* Disable during pan/zoom for performance */
+}
+
+/* Focus mode indicator */
+.focus-indicator {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 107, 107, 0.2);
+    border: 1px solid rgba(255, 107, 107, 0.4);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    color: #ff6b6b;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.focus-indicator.active {
+    opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .zoom-controls {
+        top: 10px;
+        right: 10px;
+        flex-direction: row;
+    }
+    
+    .zoom-btn {
+        width: 32px;
+        height: 32px;
+    }
+}

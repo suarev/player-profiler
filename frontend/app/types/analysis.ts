@@ -1,4 +1,4 @@
-// Types for the analysis page
+// frontend/app/types/analysis.ts
 
 export interface ForwardMetrics {
   id: string
@@ -47,7 +47,17 @@ export interface PCAPoint {
   cluster?: string
 }
 
+export interface ClusterCenter {
+  cluster_id: number
+  label: string
+  x: number
+  y: number
+  count: number
+}
+
 export interface PCAData {
   points: PCAPoint[]
   explained_variance: number[]
+  pc_interpretation: Record<string, string>
+  cluster_centers: ClusterCenter[]
 }

@@ -1,3 +1,4 @@
+# backend/app/models/schemas.py
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 
@@ -10,7 +11,7 @@ class RecommendationRequest(BaseModel):
     """Request body for player recommendations"""
     weights: List[MetricWeight]
     algorithm: str = "weighted_score"
-    limit: int = 3
+    limit: int = 10
 
 class PlayerRecommendation(BaseModel):
     """Single player recommendation"""
@@ -36,10 +37,20 @@ class PCAPoint(BaseModel):
     y: float
     cluster: Optional[str] = None
 
+class ClusterCenter(BaseModel):
+    """Cluster center information"""
+    cluster_id: int
+    label: str
+    x: float
+    y: float
+    count: int
+
 class PCAResponse(BaseModel):
     """PCA data for visualization"""
     points: List[PCAPoint]
     explained_variance: List[float]
+    pc_interpretation: Dict[str, str]
+    cluster_centers: List[ClusterCenter]
 
 class Algorithm(BaseModel):
     """Algorithm description"""
