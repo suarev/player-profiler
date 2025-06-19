@@ -9,7 +9,7 @@ FORWARD_METRICS = {
             "expected_npxg_per_sh"
         ],
         "weights": {  # Internal weights for combining columns
-            "performance_gls": 0.4,
+            "performance_gls": 10,
             "expected_npxg": 0.4,
             "expected_npxg_per_sh": 0.2,
         }
@@ -33,7 +33,8 @@ FORWARD_METRICS = {
             "performance_ast",
             "expected_xag",
             "kp",
-            "sca_sca"
+            "sca_sca",
+            "sca_types_passlive"
         ],
         "weights": {
             "performance_ast": 0.2,

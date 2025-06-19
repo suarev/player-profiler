@@ -117,7 +117,7 @@ class ForwardPCAAnalyzer:
         feature_cols = [
             'performance_gls_pct', 'expected_xg_pct', 'expected_npxg_per_sh_pct', 'standard_sot_pct', #SHOOTING
             'aerial_duels_wonpct_pct', 'aerial_duels_won_pct', #AERIAL
-            'performance_ast_pct', 'expected_xag_pct', 'kp_pct', 'sca_sca_pct', 'gca_gca_pct', #CREATING
+            'performance_ast_pct', 'expected_xag_pct', 'kp_pct', 'sca_sca_pct', 'gca_gca_pct', 'sca_types_passlive_pct','sca_types_to_pct', 'sca_types_sho_pct','sca_types_fld_pct','sca_types_def_pct'#CREATING
             'take_ons_succ_pct', 'carries_prgc_pct', 'touches_att_pen_pct', 'carries_1_per_3_pct', #CARRYING/DRIBBLING
             'tackles_att_3rd_pct','performance_recov_pct' #DEFENDING
         ]
