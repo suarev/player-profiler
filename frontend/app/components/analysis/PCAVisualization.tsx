@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import * as d3 from 'd3'
 import { PCAData } from '@/app/types/analysis'
 
@@ -12,19 +12,21 @@ interface PCAVisualizationProps {
 export default function PCAVisualization({ data, highlightedPlayers }: PCAVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; player: string } | null>(null)
+  const [hoveredPlayer, setHoveredPlayer] = useState<{name: string, team: string} | null>(null)
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
-  const [zoomLevel, setZoomLevel] = useState(1)
-  const [isPanning, setIsPanning] = useState(false)
+  const [transform, setTransform] = useState({ k: 1, x: 0, y: 0 })
+  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
 
   // Handle resize
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
         setDimensions({
-          width: containerRef.current.clientWidth,
-          height: containerRef.current.clientHeight
+          width: rect.width,
+          height: rect.height
         })
       }
     }
@@ -34,429 +36,382 @@ export default function PCAVisualization({ data, highlightedPlayers }: PCAVisual
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // Zoom handlers
+  const handleZoom = useCallback((direction: 'in' | 'out' | 'reset' | 'focus') => {
+    if (!svgRef.current || !zoomRef.current || !data) return
+
+    const svg = d3.select(svgRef.current)
+    
+    switch (direction) {
+      case 'in':
+        svg.transition().duration(300).call(zoomRef.current.scaleBy, 1.5)
+        break
+      case 'out':
+        svg.transition().duration(300).call(zoomRef.current.scaleBy, 0.67)
+        break
+      case 'reset':
+        svg.transition().duration(300).call(zoomRef.current.transform, d3.zoomIdentity)
+        break
+      case 'focus':
+        // Just reset to show all data properly centered
+        svg.transition().duration(500).call(zoomRef.current.transform, d3.zoomIdentity)
+        break
+    }
+  }, [data, dimensions])
+
+  // Main visualization effect
   useEffect(() => {
     if (!data || !svgRef.current || dimensions.width === 0) return
 
-    // Clear previous visualization
-    d3.select(svgRef.current).selectAll('*').remove()
+    const svg = d3.select(svgRef.current)
+    svg.selectAll('*').remove()
 
-    // Set dimensions and margins
-    const margin = { top: 60, right: 200, bottom: 80, left: 80 }
+    // Set SVG dimensions explicitly
+    svg
+      .attr('width', dimensions.width)
+      .attr('height', dimensions.height)
+      .attr('viewBox', `0 0 ${dimensions.width} ${dimensions.height}`)
+
+    const margin = { top: 40, right: 40, bottom: 60, left: 60 }
     const width = dimensions.width - margin.left - margin.right
     const height = dimensions.height - margin.top - margin.bottom
 
-    // Create SVG with zoom capabilities
-    const svg = d3.select(svgRef.current)
-      .attr('width', dimensions.width)
-      .attr('height', dimensions.height)
+    // Create zoom container
+    const zoomContainer = svg.append('g')
+      .attr('class', 'zoom-container')
 
-    // Create a group for zoom transformations
-    const zoomGroup = svg.append('g')
-    
-    const g = zoomGroup.append('g')
+    // Main group for the chart
+    const g = zoomContainer.append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`)
 
-    // Calculate data density to find where most points are
-    const xValues = data.points.map(d => d.x)
-    const yValues = data.points.map(d => d.y)
-    
-    // Find the 80th percentile range (where most data is)
-    const xSorted = [...xValues].sort((a, b) => a - b)
-    const ySorted = [...yValues].sort((a, b) => a - b)
-    
-    const percentile = (arr: number[], p: number) => {
-      const index = Math.ceil(arr.length * p) - 1
-      return arr[index]
-    }
-    
-    // Focus on the middle 80% of data initially
-    const xMin = percentile(xSorted, 0.1)
-    const xMax = percentile(xSorted, 0.9)
-    const yMin = percentile(ySorted, 0.1)
-    const yMax = percentile(ySorted, 0.9)
-    
-    // Add some padding
-    const xPadding = (xMax - xMin) * 0.1
-    const yPadding = (yMax - yMin) * 0.1
-
-    // Create scales - focused on the dense area
-    const xScale = d3.scaleLinear()
-      .domain([xMin - xPadding, xMax + xPadding])
-      .range([0, width])
-
-    const yScale = d3.scaleLinear()
-      .domain([yMin - yPadding, yMax + yPadding])
-      .range([height, 0])
-
-    // Create full scales for reference (used in overview)
+    // Get data extents
     const xExtent = d3.extent(data.points, d => d.x) as [number, number]
     const yExtent = d3.extent(data.points, d => d.y) as [number, number]
     
-    const xScaleFull = d3.scaleLinear()
-      .domain([xExtent[0] - 0.5, xExtent[1] + 0.5])
+    // Add padding to extents
+    const xPadding = (xExtent[1] - xExtent[0]) * 0.1
+    const yPadding = (yExtent[1] - yExtent[0]) * 0.1
+
+    // Create scales
+    const xScale = d3.scaleLinear()
+      .domain([xExtent[0] - xPadding, xExtent[1] + xPadding])
       .range([0, width])
 
-    const yScaleFull = d3.scaleLinear()
-      .domain([yExtent[0] - 0.5, yExtent[1] + 0.5])
+    const yScale = d3.scaleLinear()
+      .domain([yExtent[0] - yPadding, yExtent[1] + yPadding])
       .range([height, 0])
 
-    // Add zoom behavior
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 10])  // Min and max zoom
-      .extent([[0, 0], [dimensions.width, dimensions.height]])
-      .on('zoom', (event) => {
-        zoomGroup.attr('transform', event.transform)
-        setZoomLevel(event.transform.k)
-        setIsPanning(true)
-        
-        // Update axes based on zoom
-        const newXScale = event.transform.rescaleX(xScale)
-        const newYScale = event.transform.rescaleY(yScale)
-        
-        xAxis.call(d3.axisBottom(newXScale).ticks(5))
-        yAxis.call(d3.axisLeft(newYScale).ticks(5))
-      })
-      .on('end', () => {
-        setIsPanning(false)
-      })
+    // Add background for interactivity
+    g.append('rect')
+      .attr('class', 'zoom-background')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('fill', 'transparent')
 
-    svg.call(zoom)
-
-    // Add subtle grid
-    const xGridLines = g.append('g')
+    // Add grid FIRST (behind everything)
+    const xGrid = g.append('g')
       .attr('class', 'grid')
       .attr('transform', `translate(0,${height})`)
       .call(d3.axisBottom(xScale)
         .tickSize(-height)
         .tickFormat(() => '')
-        .ticks(10)
-      )
+        .ticks(10))
       .style('stroke-dasharray', '2,2')
-      .style('opacity', 0.1)
+      .style('opacity', 0.05)
 
-    const yGridLines = g.append('g')
+    const yGrid = g.append('g')
       .attr('class', 'grid')
       .call(d3.axisLeft(yScale)
         .tickSize(-width)
         .tickFormat(() => '')
-        .ticks(10)
-      )
+        .ticks(10))
       .style('stroke-dasharray', '2,2')
-      .style('opacity', 0.1)
+      .style('opacity', 0.05)
 
     // Add axes
-    const xAxis = g.append('g')
+    const xAxisG = g.append('g')
       .attr('class', 'x-axis')
       .attr('transform', `translate(0,${height})`)
       .call(d3.axisBottom(xScale).ticks(5))
-      .style('color', 'rgba(255, 255, 255, 0.5)')
+      .style('color', 'rgba(255, 255, 255, 0.3)')
 
-    const yAxis = g.append('g')
+    const yAxisG = g.append('g')
       .attr('class', 'y-axis')
       .call(d3.axisLeft(yScale).ticks(5))
-      .style('color', 'rgba(255, 255, 255, 0.5)')
+      .style('color', 'rgba(255, 255, 255, 0.3)')
 
-    // Add axis labels with interpretation
+    // Style axis text
+    xAxisG.selectAll('text').style('fill', 'rgba(255, 255, 255, 0.5)')
+    yAxisG.selectAll('text').style('fill', 'rgba(255, 255, 255, 0.5)')
+
+    // Add axis labels
     g.append('text')
       .attr('class', 'axis-label')
       .attr('transform', 'rotate(-90)')
-      .attr('y', 0 - margin.left)
+      .attr('y', 0 - margin.left + 15)
       .attr('x', 0 - (height / 2))
       .attr('dy', '1em')
       .style('text-anchor', 'middle')
-      .style('fill', 'rgba(255, 255, 255, 0.7)')
-      .style('font-size', '14px')
-      .text(`← ${data.pc_interpretation?.PC2 || 'PC2'} (${(data.explained_variance[1] * 100).toFixed(0)}% variance)`)
+      .style('fill', 'rgba(255, 255, 255, 0.5)')
+      .style('font-size', '12px')
+      .text(`← ${data.pc_interpretation?.PC2 || 'PC2'}`)
 
     g.append('text')
       .attr('class', 'axis-label')
       .attr('transform', `translate(${width / 2}, ${height + margin.bottom - 10})`)
       .style('text-anchor', 'middle')
-      .style('fill', 'rgba(255, 255, 255, 0.7)')
-      .style('font-size', '14px')
-      .text(`${data.pc_interpretation?.PC1 || 'PC1'} → (${(data.explained_variance[0] * 100).toFixed(0)}% variance)`)
+      .style('fill', 'rgba(255, 255, 255, 0.5)')
+      .style('font-size', '12px')
+      .text(`${data.pc_interpretation?.PC1 || 'PC1'} →`)
 
-    // Color scale for clusters
-    const uniqueClusters = Array.from(new Set(data.points.map(p => p.cluster).filter((c): c is string => c !== null && c !== undefined)))
+    // Color scale
+    const uniqueClusters = Array.from(new Set(data.points.map(p => p.cluster).filter(Boolean))) as string[]
     const colorScale = d3.scaleOrdinal<string>()
       .domain(uniqueClusters)
-      .range(['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#f9ca24', '#f0932b'])
+      .range(['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#f9ca24', '#f0932b', '#6c5ce7', '#a29bfe'])
 
-    // Add cluster regions (subtle backgrounds)
+    // Add cluster labels BEFORE points so they're behind
     if (data.cluster_centers && data.cluster_centers.length > 0) {
-      const voronoi = d3.Delaunay
-        .from(data.cluster_centers, d => xScale(d.x), d => yScale(d.y))
-        .voronoi([0, 0, width, height])
-
       g.append('g')
-        .attr('class', 'cluster-regions')
-        .selectAll('path')
-        .data(data.cluster_centers)
-        .enter()
-        .append('path')
-        .attr('d', (d, i) => voronoi.renderCell(i))
-        .attr('fill', d => colorScale(d.label) as string)
-        .attr('opacity', 0.05)
-        .attr('stroke', 'none')
-    }
-
-    // Add cluster labels
-    if (data.cluster_centers) {
-      g.append('g')
-        .attr('class', 'cluster-labels')
+        .attr('class', 'cluster-labels-group')
         .selectAll('text')
         .data(data.cluster_centers)
         .enter()
         .append('text')
+        .attr('class', 'cluster-label')
         .attr('x', d => xScale(d.x))
         .attr('y', d => yScale(d.y))
         .style('text-anchor', 'middle')
-        .style('fill', d => colorScale(d.label) as string)
-        .style('opacity', 0.7)
-        .style('font-size', '12px')
+        .style('fill', d => colorScale(d.label))
+        .style('opacity', 0.6)
+        .style('font-size', '11px')
         .style('font-weight', '600')
         .style('pointer-events', 'none')
         .text(d => d.label)
     }
 
+    // Create points group
+    const pointsGroup = g.append('g')
+      .attr('class', 'points-group')
+
     // Add points
-    const points = g.selectAll('.pca-point')
+    const points = pointsGroup.selectAll('.point')
       .data(data.points)
-      .enter().append('circle')
-      .attr('class', 'pca-point')
+      .enter()
+      .append('circle')
+      .attr('class', 'point')
       .attr('cx', d => xScale(d.x))
       .attr('cy', d => yScale(d.y))
-      .attr('r', d => highlightedPlayers.includes(d.player_id) ? 8 : 5)
+      .attr('r', d => highlightedPlayers.includes(d.player_id) ? 7 : 4)
       .attr('fill', d => {
         if (selectedCluster && d.cluster !== selectedCluster) {
-          return 'rgba(255, 255, 255, 0.2)'
+          return 'rgba(255, 255, 255, 0.1)'
         }
-        return d.cluster ? colorScale(d.cluster) as string : 'rgba(255, 255, 255, 0.6)'
+        return d.cluster ? colorScale(d.cluster) : 'rgba(255, 255, 255, 0.6)'
       })
       .attr('stroke', d => highlightedPlayers.includes(d.player_id) ? '#fff' : 'none')
       .attr('stroke-width', 2)
       .style('cursor', 'pointer')
       .style('opacity', d => {
-        if (selectedCluster && d.cluster !== selectedCluster) return 0.3
-        return highlightedPlayers.includes(d.player_id) ? 1 : 0.8
+        if (selectedCluster && d.cluster !== selectedCluster) return 0.2
+        return highlightedPlayers.includes(d.player_id) ? 1 : 0.7
       })
-      .on('mouseover', function(event, d) {
-        if (!isPanning) {
-          d3.select(this).attr('r', 10)
-          const [x, y] = d3.pointer(event, svg.node())
-          setTooltip({ x, y: y - 20, player: `${d.name} (${d.team})` })
+
+    // Add interactions to points
+    points
+      .on('mouseenter', function(event, d) {
+        d3.select(this).transition().duration(100).attr('r', 8)
+        setHoveredPlayer({ name: d.name, team: d.team })
+        const rect = containerRef.current?.getBoundingClientRect()
+        if (rect) {
+          setMousePos({ 
+            x: event.clientX - rect.left, 
+            y: event.clientY - rect.top - 20 
+          })
         }
       })
-      .on('mouseout', function(event, d) {
-        d3.select(this).attr('r', highlightedPlayers.includes(d.player_id) ? 8 : 5)
-        setTooltip(null)
+      .on('mousemove', function(event, d) {
+        const rect = containerRef.current?.getBoundingClientRect()
+        if (rect) {
+          setMousePos({ 
+            x: event.clientX - rect.left, 
+            y: event.clientY - rect.top - 20 
+          })
+        }
+      })
+      .on('mouseleave', function(event, d) {
+        d3.select(this).transition().duration(100)
+          .attr('r', highlightedPlayers.includes(d.player_id) ? 7 : 4)
+        setHoveredPlayer(null)
       })
       .on('click', function(event, d) {
-        if (!isPanning) {
-          event.stopPropagation()
-          if (d.cluster) {
-            setSelectedCluster(selectedCluster === d.cluster ? null : d.cluster)
-          }
+        event.stopPropagation()
+        if (d.cluster) {
+          setSelectedCluster(prev => prev === d.cluster ? null : d.cluster!)
         }
       })
 
-    // Add legend
-    const legend = svg.append('g')
-      .attr('class', 'legend')
-      .attr('transform', `translate(${width + margin.left + 20}, ${margin.top})`)
-
-    const legendItems = uniqueClusters.map((cluster, i) => ({
-      cluster,
-      color: colorScale(cluster) as string,
-      count: data.points.filter(p => p.cluster === cluster).length
-    }))
-
-    legend.append('text')
-      .attr('x', 0)
-      .attr('y', -10)
-      .style('fill', 'rgba(255, 255, 255, 0.7)')
-      .style('font-size', '12px')
-      .style('font-weight', '600')
-      .text('PLAYER TYPES')
-
-    const legendItem = legend.selectAll('.legend-item')
-      .data(legendItems)
-      .enter().append('g')
-      .attr('class', 'legend-item')
-      .attr('transform', (d, i) => `translate(0, ${i * 25 + 10})`)
-      .style('cursor', 'pointer')
-      .on('click', function(event, d) {
-        setSelectedCluster(selectedCluster === d.cluster ? null : d.cluster)
-      })
-
-    legendItem.append('circle')
-      .attr('r', 6)
-      .attr('fill', d => d.color)
-      .style('opacity', d => {
-        if (selectedCluster && d.cluster !== selectedCluster) return 0.3
-        return 1
-      })
-
-    legendItem.append('text')
-      .attr('x', 15)
-      .attr('y', 5)
-      .style('fill', d => {
-        if (selectedCluster && d.cluster !== selectedCluster) return 'rgba(255, 255, 255, 0.3)'
-        return 'rgba(255, 255, 255, 0.8)'
-      })
-      .style('font-size', '12px')
-      .text(d => `${d.cluster} (${d.count})`)
-
-    // Add highlighted player names
+    // Add highlighted player labels
     const highlightedData = data.points.filter(p => highlightedPlayers.includes(p.player_id))
     if (highlightedData.length > 0) {
-      g.append('g')
-        .attr('class', 'player-labels')
-        .selectAll('text')
+      const labelsGroup = g.append('g')
+        .attr('class', 'player-labels-group')
+        
+      labelsGroup.selectAll('.player-label')
         .data(highlightedData)
         .enter()
         .append('text')
+        .attr('class', 'player-label')
         .attr('x', d => xScale(d.x))
         .attr('y', d => yScale(d.y) - 12)
         .style('text-anchor', 'middle')
         .style('fill', '#fff')
-        .style('font-size', '11px')
+        .style('font-size', '10px')
         .style('font-weight', '600')
         .style('pointer-events', 'none')
-        .style('text-shadow', '0 0 4px rgba(0,0,0,0.8)')
+        .style('text-shadow', '0 0 3px rgba(0,0,0,0.8)')
         .text(d => d.name)
     }
 
-    // Clear cluster selection when clicking background
+    // Create zoom behavior
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.5, 8])
+      .on('zoom', (event) => {
+        const { transform } = event
+        setTransform({ k: transform.k, x: transform.x, y: transform.y })
+        
+        // Apply transform to the zoom container
+        zoomContainer.attr('transform', transform.toString())
+      })
+
+    // Apply zoom to svg
+    svg.call(zoom)
+    
+    // Store zoom reference
+    zoomRef.current = zoom
+
+    // Clear selection on background click
     svg.on('click', () => setSelectedCluster(null))
 
-    // Zoom control functions
-    const zoomIn = () => {
-      svg.transition().duration(300).call(zoom.scaleBy, 1.5)
-    }
+    // Don't auto-focus, let the data show naturally
 
-    const zoomOut = () => {
-      svg.transition().duration(300).call(zoom.scaleBy, 0.67)
-    }
+  }, [data, dimensions, selectedCluster, highlightedPlayers, handleZoom])
 
-    const resetZoom = () => {
-      svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity)
-    }
+  if (!data) return null
 
-    const focusDenseArea = () => {
-      // Calculate transform to focus on the dense area
-      const k = 1.2  // Slight zoom
-      const x = -xScale(xMin + (xMax - xMin) / 2) * k + width / 2
-      const y = -yScale(yMin + (yMax - yMin) / 2) * k + height / 2
-      
-      svg.transition().duration(500)
-        .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(k))
-    }
-
-    // Add zoom controls to the container
-    d3.select(containerRef.current)
-      .select('.zoom-controls')
-      .remove()
-    
-    const controls = d3.select(containerRef.current)
-      .append('div')
-      .attr('class', 'zoom-controls')
-      .style('position', 'absolute')
-      .style('top', '20px')
-      .style('right', '20px')
-      .style('display', 'flex')
-      .style('flex-direction', 'column')
-      .style('gap', '8px')
-
-    // Store functions for button clicks
-    ;(window as any).pcaZoomIn = zoomIn
-    ;(window as any).pcaZoomOut = zoomOut
-    ;(window as any).pcaResetZoom = resetZoom
-    ;(window as any).pcaFocusDense = focusDenseArea
-
-    // Start with focused view
-    setTimeout(focusDenseArea, 100)
-
-  }, [data, highlightedPlayers, dimensions, selectedCluster, isPanning])
+  const uniqueClusters = Array.from(new Set(data.points.map(p => p.cluster).filter(Boolean))) as string[]
+  const colorScale = d3.scaleOrdinal<string>()
+    .domain(uniqueClusters)
+    .range(['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#f9ca24', '#f0932b', '#6c5ce7', '#a29bfe'])
 
   return (
-    <div className="pca-container" ref={containerRef}>
-      <svg ref={svgRef} className="pca-canvas" />
-      {tooltip && (
+    <div className="pca-viz-container" ref={containerRef}>
+      {/* SVG Canvas */}
+      <svg ref={svgRef} className="pca-svg" />
+      
+      {/* Tooltip - Rendered as React component */}
+      {hoveredPlayer && (
         <div 
-          className="pca-tooltip" 
+          className="pca-hover-tooltip"
           style={{ 
-            left: tooltip.x + 'px', 
-            top: tooltip.y + 'px',
-            opacity: 1 
+            left: `${mousePos.x}px`, 
+            top: `${mousePos.y}px`
           }}
         >
-          {tooltip.player}
+          {hoveredPlayer.name} ({hoveredPlayer.team})
         </div>
       )}
       
-      {/* Zoom Controls */}
-      <div className="zoom-controls">
-        <button 
-          className="zoom-btn"
-          onClick={() => (window as any).pcaZoomIn?.()}
-          title="Zoom In"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
-          </svg>
-        </button>
-        <button 
-          className="zoom-btn"
-          onClick={() => (window as any).pcaZoomOut?.()}
-          title="Zoom Out"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.35-4.35M8 11h6"/>
-          </svg>
-        </button>
-        <button 
-          className="zoom-btn"
-          onClick={() => (window as any).pcaResetZoom?.()}
-          title="Reset View"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M3.38 8A9.77 9.77 0 0 1 12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12"/>
-            <path d="M3 8h4V4"/>
-          </svg>
-        </button>
-        <button 
-          className="zoom-btn"
-          onClick={() => (window as any).pcaFocusDense?.()}
-          title="Focus Dense Area"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-            <circle cx="12" cy="12" r="3"/>
-          </svg>
-        </button>
+      {/* Control Panel */}
+      <div className="pca-control-panel">
+        {/* Zoom Controls */}
+        <div className="zoom-controls-group">
+          <button className="pca-control-btn" onClick={() => handleZoom('in')} title="Zoom In">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
+            </svg>
+          </button>
+          <button className="pca-control-btn" onClick={() => handleZoom('out')} title="Zoom Out">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35M8 11h6"/>
+            </svg>
+          </button>
+          <button className="pca-control-btn" onClick={() => handleZoom('reset')} title="Reset">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M1 4v6h6M23 20v-6h-6"/>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+          </button>
+          <button className="pca-control-btn" onClick={() => handleZoom('focus')} title="Auto Focus">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        
+        {/* Zoom Level Indicator */}
+        {transform.k !== 1 && (
+          <div className="zoom-level">{Math.round(transform.k * 100)}%</div>
+        )}
       </div>
       
-      {/* Controls for the visualization */}
-      <div className="pca-info-panel">
-        <div className="variance-info">
-          <h4>Variance Explained</h4>
-          <div className="variance-bar">
-            <div className="variance-pc1" style={{ width: `${(data?.explained_variance[0] || 0) * 100}%` }}>
-              PC1: {((data?.explained_variance[0] || 0) * 100).toFixed(0)}%
+      {/* Bottom Info Bar - Clean horizontal layout */}
+      <div className="pca-bottom-bar">
+        {/* Groups Section - 70% */}
+        <div className="groups-section">
+          <h4 className="section-label">PLAYER TYPES</h4>
+          <div className="groups-container">
+            {uniqueClusters.map(cluster => {
+              const count = data.points.filter(p => p.cluster === cluster).length
+              const isActive = !selectedCluster || selectedCluster === cluster
+              
+              return (
+                <div
+                  key={cluster}
+                  className={`group-item ${!isActive ? 'inactive' : ''}`}
+                  onClick={() => setSelectedCluster(prev => prev === cluster ? null : cluster)}
+                >
+                  <div 
+                    className="group-dot"
+                    style={{ backgroundColor: colorScale(cluster) }}
+                  />
+                  <span className="group-label">{cluster}</span>
+                  <span className="group-count">({count})</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        
+        {/* Variance Section - 30% */}
+        <div className="variance-section">
+          <h4 className="section-label">VARIANCE EXPLAINED</h4>
+          <div className="variance-content">
+            <div className="variance-item">
+              <span className="variance-pc">PC1</span>
+              <div className="variance-bar-mini">
+                <div 
+                  className="variance-fill-mini pc1"
+                  style={{ width: `${(data.explained_variance[0] * 100).toFixed(0)}%` }}
+                />
+              </div>
+              <span className="variance-value">{(data.explained_variance[0] * 100).toFixed(0)}%</span>
             </div>
-            <div className="variance-pc2" style={{ width: `${(data?.explained_variance[1] || 0) * 100}%` }}>
-              PC2: {((data?.explained_variance[1] || 0) * 100).toFixed(0)}%
+            <div className="variance-item">
+              <span className="variance-pc">PC2</span>
+              <div className="variance-bar-mini">
+                <div 
+                  className="variance-fill-mini pc2"
+                  style={{ width: `${(data.explained_variance[1] * 100).toFixed(0)}%` }}
+                />
+              </div>
+              <span className="variance-value">{(data.explained_variance[1] * 100).toFixed(0)}%</span>
             </div>
           </div>
         </div>
-        {zoomLevel !== 1 && (
-          <div className="zoom-indicator">
-            Zoom: {(zoomLevel * 100).toFixed(0)}%
-          </div>
-        )}
       </div>
     </div>
   )

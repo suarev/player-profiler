@@ -502,10 +502,7 @@
     margin-bottom: 2rem;
 }
 
-.second-page .pca-container {
-    flex: 1;
-    min-height: 80vh;
-}
+
 
 /* PCA Section */
 .pca-header {
@@ -535,32 +532,6 @@
     color: #fff;
 }
 
-.pca-container {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    min-height: 400px;
-}
-
-.pca-canvas {
-    width: 100%;
-    height: 100%;
-}
-
-.pca-tooltip {
-    position: absolute;
-    background: rgba(0, 0, 0, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    white-space: nowrap;
-    z-index: 100;
-}
 
 /* Scrollbar styling */
 .sliders-grid::-webkit-scrollbar {
@@ -703,130 +674,273 @@
   accent-color: #ff6b6b;
 }
 
-/* Zoom Controls - Add to frontend/app/styles/analysis.css */
 
-/* Zoom control buttons */
-.zoom-controls {
-    position: absolute;
-    top: 20px;
-    right: 20px;
+/* PCA Visualization Container */
+.pca-viz-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+}
+
+/* SVG Canvas */
+.pca-svg {
+    width: 100%;
+    flex: 1;
+    cursor: grab;
+    display: block;
+}
+
+.pca-svg:active {
+    cursor: grabbing;
+}
+
+/* Hover Tooltip */
+.pca-hover-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.9);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+}
+
+/* Control Panel - Top Right */
+.pca-control-panel {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
     z-index: 10;
 }
 
-.zoom-btn {
-    width: 36px;
-    height: 36px;
+.zoom-controls-group {
+    display: flex;
+    gap: 0.5rem;
     background: rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
+    padding: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+}
+
+.pca-control-btn {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.6);
 }
 
-.zoom-btn:hover {
+.pca-control-btn:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.4);
+    border-color: rgba(255, 255, 255, 0.3);
     color: #fff;
 }
 
-.zoom-btn:active {
+.pca-control-btn:active {
     transform: scale(0.95);
 }
 
-.zoom-btn svg {
-    width: 20px;
-    height: 20px;
-    stroke-width: 2;
+.zoom-level {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Zoom indicator */
-.zoom-indicator {
-    margin-top: 0.5rem;
+/* Bottom Info Bar - Clean horizontal layout */
+.pca-bottom-bar {
+    display: flex;
+    background: rgba(0, 0, 0, 0.8);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+}
+
+/* Groups Section - 70% width */
+.groups-section {
+    flex: 0 0 70%;
+    padding: 1rem 1.5rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-label {
     font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.5);
-    text-align: center;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
 }
 
-/* Updated PCA container for better interaction */
-.pca-container {
-    cursor: grab;
+.groups-container {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
-.pca-container:active {
-    cursor: grabbing;
+.group-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0.25rem 0;
 }
 
-/* Disable text selection during pan */
-.pca-container.panning {
-    user-select: none;
-    -webkit-user-select: none;
+.group-item:hover {
+    opacity: 0.8;
 }
 
-/* Overview mini-map (optional enhancement) */
-.pca-overview {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 150px;
-    height: 100px;
-    background: rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
+.group-item.inactive {
+    opacity: 0.3;
+}
+
+.group-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.group-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.group-count {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Variance Section - 30% width */
+.variance-section {
+    flex: 0 0 30%;
+    padding: 1rem 1.5rem;
+}
+
+.variance-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.variance-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.variance-pc {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    min-width: 30px;
+}
+
+.variance-bar-mini {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
     overflow: hidden;
 }
 
-.overview-viewport {
+.variance-fill-mini {
     position: absolute;
-    border: 2px solid #ff6b6b;
-    background: rgba(255, 107, 107, 0.1);
-    pointer-events: none;
+    left: 0;
+    top: 0;
+    height: 100%;
+    transition: width 0.5s ease;
 }
 
-/* Smooth transitions for zoom */
-.pca-canvas .pca-point,
-.pca-canvas .cluster-labels text,
-.pca-canvas .player-labels text {
-    transition: none; /* Disable during pan/zoom for performance */
+.variance-fill-mini.pc1 {
+    background: rgba(255, 107, 107, 0.8);
 }
 
-/* Focus mode indicator */
-.focus-indicator {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 107, 107, 0.2);
-    border: 1px solid rgba(255, 107, 107, 0.4);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+.variance-fill-mini.pc2 {
+    background: rgba(78, 205, 196, 0.8);
+}
+
+.variance-value {
     font-size: 0.75rem;
-    color: #ff6b6b;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    min-width: 35px;
+    text-align: right;
 }
 
-.focus-indicator.active {
-    opacity: 1;
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .groups-container {
+        gap: 1rem;
+    }
+    
+    .groups-section {
+        flex: 0 0 65%;
+    }
+    
+    .variance-section {
+        flex: 0 0 35%;
+    }
+}
+
+@media (max-width: 768px) {
+    .pca-bottom-bar {
+        flex-direction: column;
+    }
+    
+    .groups-section,
+    .variance-section {
+        flex: 1;
+        border-right: none;
+    }
+    
+    .groups-section {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Grid and axis styling */
+.pca-svg .grid line {
+    stroke: rgba(255, 255, 255, 0.05);
+}
+
+.pca-svg .grid path {
+    stroke: none;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .zoom-controls {
-        top: 10px;
-        right: 10px;
-        flex-direction: row;
+    .pca-control-panel {
+        top: 0.5rem;
+        right: 0.5rem;
     }
     
-    .zoom-btn {
-        width: 32px;
-        height: 32px;
+    .pca-legend-panel,
+    .pca-info-panel {
+        transform: scale(0.9);
+        transform-origin: top left;
+    }
+    
+    .pca-control-btn {
+        width: 28px;
+        height: 28px;
     }
 }

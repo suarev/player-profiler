@@ -115,12 +115,11 @@ class ForwardPCAAnalyzer:
         """
         # Define metrics (same as before)
         feature_cols = [
-            'performance_gls_pct', 'expected_xg_pct', 'expected_npxg_per_sh_pct',
-            'standard_sot_pct', 'aerial_duels_wonpct_pct', 'aerial_duels_won_pct',
-            'performance_ast_pct', 'expected_xag_pct', 'kp_pct', 'sca_sca_pct',
-            'gca_gca_pct', 'take_ons_succ_pct', 'carries_prgc_pct',
-            'touches_att_pen_pct', 'carries_1_per_3_pct', 'tackles_att_3rd_pct',
-            'performance_recov_pct', 'total_cmp_pct', 'ppa_pct'
+            'performance_gls_pct', 'expected_xg_pct', 'expected_npxg_per_sh_pct', 'standard_sot_pct', #SHOOTING
+            'aerial_duels_wonpct_pct', 'aerial_duels_won_pct', #AERIAL
+            'performance_ast_pct', 'expected_xag_pct', 'kp_pct', 'sca_sca_pct', 'gca_gca_pct', #CREATING
+            'take_ons_succ_pct', 'carries_prgc_pct', 'touches_att_pen_pct', 'carries_1_per_3_pct', #CARRYING/DRIBBLING
+            'tackles_att_3rd_pct','performance_recov_pct' #DEFENDING
         ]
         
         # Filter to available columns
