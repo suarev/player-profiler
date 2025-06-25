@@ -7,9 +7,10 @@ import { PCAData } from '@/app/types/analysis'
 interface PCAVisualizationProps {
   data: PCAData | null
   highlightedPlayers: number[]
+  onClusterCountChange?: (k: number | null) => void
 }
 
-export default function PCAVisualization({ data, highlightedPlayers }: PCAVisualizationProps) {
+export default function PCAVisualization({ data, highlightedPlayers, onClusterCountChange }: PCAVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [hoveredPlayer, setHoveredPlayer] = useState<{name: string, team: string} | null>(null)
@@ -17,6 +18,9 @@ export default function PCAVisualization({ data, highlightedPlayers }: PCAVisual
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
   const [transform, setTransform] = useState({ k: 1, x: 0, y: 0 })
+  const [useOptimalClusters, setUseOptimalClusters] = useState(true)
+  const [customClusterCount, setCustomClusterCount] = useState(5)
+  const [expandedCluster, setExpandedCluster] = useState<string | null>(null)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
 
   // Handle resize
@@ -251,27 +255,9 @@ export default function PCAVisualization({ data, highlightedPlayers }: PCAVisual
         }
       })
 
-    // Add highlighted player labels
+    // Add highlighted player labels - REMOVED TO ONLY SHOW OUTLINE
     const highlightedData = data.points.filter(p => highlightedPlayers.includes(p.player_id))
-    if (highlightedData.length > 0) {
-      const labelsGroup = g.append('g')
-        .attr('class', 'player-labels-group')
-        
-      labelsGroup.selectAll('.player-label')
-        .data(highlightedData)
-        .enter()
-        .append('text')
-        .attr('class', 'player-label')
-        .attr('x', d => xScale(d.x))
-        .attr('y', d => yScale(d.y) - 12)
-        .style('text-anchor', 'middle')
-        .style('fill', '#fff')
-        .style('font-size', '10px')
-        .style('font-weight', '600')
-        .style('pointer-events', 'none')
-        .style('text-shadow', '0 0 3px rgba(0,0,0,0.8)')
-        .text(d => d.name)
-    }
+    // No labels, just the highlighted circles which are already styled above
 
     // Create zoom behavior
     const zoom = d3.zoom<SVGSVGElement, unknown>()
@@ -352,6 +338,58 @@ export default function PCAVisualization({ data, highlightedPlayers }: PCAVisual
           </button>
         </div>
         
+        {/* Cluster Control */}
+        <div className="cluster-control-group">
+          <button 
+            className={`cluster-toggle-btn ${useOptimalClusters ? 'active' : ''}`}
+            onClick={() => {
+              const newState = !useOptimalClusters
+              setUseOptimalClusters(newState)
+              // Notify parent to refetch data
+              if (onClusterCountChange) {
+                onClusterCountChange(newState ? null : customClusterCount)
+              }
+            }}
+            title={useOptimalClusters ? "Using Optimal Clusters" : "Using Custom Clusters"}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            <span className="cluster-toggle-label">
+              {useOptimalClusters ? 'AUTO' : `K=${customClusterCount}`}
+            </span>
+          </button>
+          {!useOptimalClusters && (
+            <div className="cluster-number-controls">
+              <button 
+                className="cluster-adjust-btn"
+                onClick={() => {
+                  const newCount = Math.max(2, customClusterCount - 1)
+                  setCustomClusterCount(newCount)
+                  if (!useOptimalClusters && onClusterCountChange) {
+                    onClusterCountChange(newCount)
+                  }
+                }}
+              >
+                −
+              </button>
+              <span className="cluster-number">{customClusterCount}</span>
+              <button 
+                className="cluster-adjust-btn"
+                onClick={() => {
+                  const newCount = Math.min(10, customClusterCount + 1)
+                  setCustomClusterCount(newCount)
+                  if (!useOptimalClusters && onClusterCountChange) {
+                    onClusterCountChange(newCount)
+                  }
+                }}
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
+        
         {/* Zoom Level Indicator */}
         {transform.k !== 1 && (
           <div className="zoom-level">{Math.round(transform.k * 100)}%</div>
@@ -367,19 +405,52 @@ export default function PCAVisualization({ data, highlightedPlayers }: PCAVisual
             {uniqueClusters.map(cluster => {
               const count = data.points.filter(p => p.cluster === cluster).length
               const isActive = !selectedCluster || selectedCluster === cluster
+              const isExpanded = expandedCluster === cluster
+              const clusterPlayers = data.points.filter(p => p.cluster === cluster)
               
               return (
-                <div
-                  key={cluster}
-                  className={`group-item ${!isActive ? 'inactive' : ''}`}
-                  onClick={() => setSelectedCluster(prev => prev === cluster ? null : cluster)}
-                >
-                  <div 
-                    className="group-dot"
-                    style={{ backgroundColor: colorScale(cluster) }}
-                  />
-                  <span className="group-label">{cluster}</span>
-                  <span className="group-count">({count})</span>
+                <div key={cluster} className="group-box">
+                  <div
+                    className={`group-item ${!isActive ? 'inactive' : ''}`}
+                    onClick={() => setSelectedCluster(prev => prev === cluster ? null : cluster)}
+                  >
+                    <div 
+                      className="group-dot"
+                      style={{ backgroundColor: colorScale(cluster) }}
+                    />
+                    <span className="group-label">{cluster}</span>
+                    <span className="group-count">({count})</span>
+                    <button
+                      className="group-expand-btn"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setExpandedCluster(prev => prev === cluster ? null : cluster)
+                      }}
+                    >
+                      <svg 
+                        width="12" 
+                        height="12" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor"
+                        style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)' }}
+                      >
+                        <path d="M6 9l6 6 6-6" strokeWidth="2"/>
+                      </svg>
+                    </button>
+                  </div>
+                  {isExpanded && (
+                    <div className="group-players-dropdown">
+                      <div className="group-players-list">
+                        {clusterPlayers.map(player => (
+                          <div key={player.player_id} className="group-player-item">
+                            <span className="player-name">{player.name}</span>
+                            <span className="player-team">{player.team}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}

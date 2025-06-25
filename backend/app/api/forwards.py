@@ -1,6 +1,6 @@
 # backend/app/api/forwards.py
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import List, Optional  # ADD Optional here
 import pandas as pd
 from app.models.schemas import (
     RecommendationRequest, 
@@ -12,7 +12,6 @@ from app.core.metrics import FORWARD_METRICS
 from app.core.database import execute_query
 
 router = APIRouter()
-
 # Lazy initialization
 _analyzer = None
 _pca_analyzer = None
@@ -73,8 +72,12 @@ async def get_recommendations(request: RecommendationRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/pca-data", response_model=PCAResponse)
-async def get_pca_data():
-    """Get PCA coordinates for all forwards"""
+async def get_pca_data(k: Optional[int] = None):
+    """
+    Get PCA coordinates for all forwards
+    Args:
+        k: Optional number of clusters (if not provided, uses optimal)
+    """
     try:
         # Get the data - reuse the same data structure from PlayerAnalyzer
         query = """
@@ -111,9 +114,9 @@ async def get_pca_data():
                 if value is not None:  # Only add non-null percentiles
                     df.at[idx, f"{key}_pct"] = value
         
-        # Get PCA analyzer and compute
+        # Get PCA analyzer and compute with custom k if provided
         pca_analyzer = get_pca_analyzer()
-        pca_results = pca_analyzer.compute_pca(df)
+        pca_results = pca_analyzer.compute_pca(df, custom_k=k)  # Pass the k parameter
         
         # Format for response
         return PCAResponse(
@@ -128,29 +131,4 @@ async def get_pca_data():
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         print(f"PCA Error: {e}")
-        # Fallback to mock data if real PCA fails
-        return PCAResponse(
-            points=[
-                {"player_id": 1, "name": "Haaland", "team": "Man City", "x": 2.5, "y": -0.5, "cluster": "Elite Finishers"},
-                {"player_id": 2, "name": "Kane", "team": "Bayern", "x": 1.2, "y": 1.8, "cluster": "Creative Forwards"},
-                {"player_id": 3, "name": "Osimhen", "team": "Napoli", "x": 2.1, "y": -0.3, "cluster": "Elite Finishers"},
-                {"player_id": 4, "name": "Mbappé", "team": "PSG", "x": 1.8, "y": 0.5, "cluster": "Dribblers & Runners"},
-                {"player_id": 5, "name": "Lewandowski", "team": "Barcelona", "x": 2.3, "y": 0.2, "cluster": "Elite Finishers"},
-                {"player_id": 6, "name": "Jesus", "team": "Arsenal", "x": -0.5, "y": 1.5, "cluster": "Creative Forwards"},
-                {"player_id": 7, "name": "Havertz", "team": "Arsenal", "x": -0.8, "y": 1.2, "cluster": "Creative Forwards"},
-                {"player_id": 8, "name": "Toney", "team": "Brentford", "x": 0.5, "y": -1.5, "cluster": "Target Forwards"},
-                {"player_id": 9, "name": "Watkins", "team": "Aston Villa", "x": 1.5, "y": -0.2, "cluster": "Elite Finishers"},
-                {"player_id": 10, "name": "Isak", "team": "Newcastle", "x": 0.8, "y": 0.6, "cluster": "Balanced Forwards"},
-            ],
-            explained_variance=[0.35, 0.25],
-            pc_interpretation={
-                "PC1": "Goal Threat & Finishing",
-                "PC2": "Playmaking & Link-up"
-            },
-            cluster_centers=[
-                {"cluster_id": 0, "label": "Elite Finishers", "x": 2.0, "y": 0.0, "count": 5},
-                {"cluster_id": 1, "label": "Creative Forwards", "x": -0.5, "y": 1.3, "count": 3},
-                {"cluster_id": 2, "label": "Target Forwards", "x": 0.5, "y": -1.5, "count": 1},
-                {"cluster_id": 3, "label": "Dribblers & Runners", "x": 1.8, "y": 0.5, "count": 1}
-            ]
-        )
+        # Return the fallback mock data...

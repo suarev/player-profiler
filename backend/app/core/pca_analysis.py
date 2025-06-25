@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, davies_bouldin_score
-from typing import Dict, List, Tuple
+from typing import Optional, Dict
 import json
 
 class ForwardPCAAnalyzer:
@@ -109,9 +109,12 @@ class ForwardPCAAnalyzer:
         
         return X
     
-    def compute_pca(self, df: pd.DataFrame) -> Dict:
+    def compute_pca(self, df: pd.DataFrame, custom_k: Optional[int] = None) -> Dict:
         """
-        Compute PCA with automatic optimal clustering
+        Compute PCA with automatic or custom clustering
+        Args:
+            df: DataFrame with player data
+            custom_k: Optional custom number of clusters (2-10)
         """
         # Define metrics (same as before)
         feature_cols = [
@@ -139,10 +142,16 @@ class ForwardPCAAnalyzer:
         # Ensure good distribution
         pca_coords = self.ensure_spread_distribution(pca_coords)
         
-        # Find optimal number of clusters
-        self.optimal_clusters = self.find_optimal_clusters(pca_coords)
+        # Determine number of clusters
+        if custom_k and 2 <= custom_k <= 10:
+            self.optimal_clusters = custom_k
+            print(f"Using custom cluster count: {custom_k}")
+        else:
+            # Find optimal number of clusters
+            self.optimal_clusters = self.find_optimal_clusters(pca_coords)
+            print(f"Using optimal cluster count: {self.optimal_clusters}")
         
-        # Perform clustering with optimal k
+        # Perform clustering with the chosen k
         self.kmeans = KMeans(n_clusters=self.optimal_clusters, random_state=42, n_init=10)
         clusters = self.kmeans.fit_predict(pca_coords)
         
@@ -151,7 +160,6 @@ class ForwardPCAAnalyzer:
         
         # Calculate cluster characteristics for reference
         cluster_stats = self._get_cluster_characteristics(pca_df, clusters, available_cols)
-        
         # Create response data
         points = []
         for idx, (_, player) in enumerate(pca_df.iterrows()):
@@ -181,7 +189,7 @@ class ForwardPCAAnalyzer:
             "cluster_characteristics": cluster_stats,  # So you can name them yourself
             "distribution_quality": self._assess_distribution(pca_coords)
         }
-    
+
     def _get_cluster_characteristics(self, df: pd.DataFrame, clusters: np.ndarray, 
                                    feature_cols: List[str]) -> Dict:
         """

@@ -20,6 +20,7 @@ export default function ForwardAnalysisPage() {
   const [recommendations, setRecommendations] = useState<PlayerRecommendation[]>([])
   const [loading, setLoading] = useState(false)
   const [pcaData, setPcaData] = useState<PCAData | null>(null)
+  const [clusterCount, setClusterCount] = useState<number | null>(null)
   
 
 // Load metrics on mount
@@ -46,14 +47,14 @@ export default function ForwardAnalysisPage() {
   }
 
   // Load PCA data
-  const loadPCAData = async () => {
-    try {
-      const data = await analysisApi.getPCAData()
-      setPcaData(data)
-    } catch (error) {
-      console.error('Failed to load PCA data:', error)
-    }
+const loadPCAData = async (k?: number) => {
+  try {
+    const data = await analysisApi.getPCAData(k)
+    setPcaData(data)
+  } catch (error) {
+    console.error('Failed to load PCA data:', error)
   }
+}
 
   // Get recommendations when weights or algorithm change
   useEffect(() => {
@@ -86,6 +87,11 @@ export default function ForwardAnalysisPage() {
       [metricId]: value
     }))
   }
+
+  const handleClusterCountChange = (k: number | null) => {
+  setClusterCount(k)
+  loadPCAData(k || undefined)
+}
 
   return (
   <div className="analysis-page">
@@ -151,10 +157,11 @@ export default function ForwardAnalysisPage() {
           </div>
         </div>
         
-        <PCAVisualization 
-          data={pcaData}
-          highlightedPlayers={recommendations.map(r => r.player_id)}
-        />
+          <PCAVisualization 
+            data={pcaData}
+            highlightedPlayers={recommendations.map(r => r.player_id)}
+            onClusterCountChange={handleClusterCountChange}
+          />
       </div>
     </div>
   </div>
