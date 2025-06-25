@@ -1,3 +1,4 @@
+# backend/app/api/forwards.py
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional  # ADD Optional here
 import pandas as pd
@@ -11,6 +12,7 @@ from app.core.metrics import FORWARD_METRICS
 from app.core.database import execute_query
 
 router = APIRouter()
+
 # Lazy initialization
 _analyzer = None
 _pca_analyzer = None
@@ -104,14 +106,26 @@ async def get_pca_data(k: Optional[int] = None):
         if df.empty:
             raise HTTPException(status_code=404, detail="No forward data found")
         
-        # Expand percentiles JSON into columns
+        # Expand percentiles JSON into columns more efficiently
         import json
+        
+        # Collect all percentile columns first
+        percentile_data = {}
         
         for idx, row in df.iterrows():
             percentiles = json.loads(row['percentiles']) if isinstance(row['percentiles'], str) else row['percentiles']
             for key, value in percentiles.items():
                 if value is not None:  # Only add non-null percentiles
-                    df.at[idx, f"{key}_pct"] = value
+                    col_name = f"{key}_pct"
+                    if col_name not in percentile_data:
+                        percentile_data[col_name] = {}
+                    percentile_data[col_name][idx] = value
+        
+        # Convert to DataFrame and join all at once
+        if percentile_data:
+            percentile_df = pd.DataFrame.from_dict(percentile_data)
+            percentile_df.index = df.index
+            df = pd.concat([df, percentile_df], axis=1)
         
         # Get PCA analyzer and compute with custom k if provided
         pca_analyzer = get_pca_analyzer()
@@ -131,4 +145,5 @@ async def get_pca_data(k: Optional[int] = None):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         print(f"PCA Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
         # Return the fallback mock data...

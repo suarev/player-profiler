@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, davies_bouldin_score
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 import json
 
 class ForwardPCAAnalyzer:
