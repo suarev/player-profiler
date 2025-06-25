@@ -47,14 +47,18 @@ export default function ForwardAnalysisPage() {
   }
 
   // Load PCA data
-const loadPCAData = async (k?: number) => {
-  try {
-    const data = await analysisApi.getPCAData(k)
-    setPcaData(data)
-  } catch (error) {
-    console.error('Failed to load PCA data:', error)
+  const loadPCAData = async (k?: number) => {
+    try {
+      console.log('Loading PCA data with k=', k)  // Debug
+      const data = await analysisApi.getPCAData(k)
+      setPcaData(data)
+      console.log('PCA data loaded successfully')  // Debug
+    } catch (error) {
+      console.error('Failed to load PCA data:', error)
+      // Don't crash the page - show error but keep working
+      alert('Failed to load PCA visualization. Check console for details.')
+    }
   }
-}
 
   // Get recommendations when weights or algorithm change
   useEffect(() => {
@@ -89,9 +93,10 @@ const loadPCAData = async (k?: number) => {
   }
 
   const handleClusterCountChange = (k: number | null) => {
-  setClusterCount(k)
-  loadPCAData(k || undefined)
-}
+    console.log('Cluster count changed to:', k)  // Debug
+    setClusterCount(k)
+    loadPCAData(k || undefined)
+  }
 
   return (
   <div className="analysis-page">

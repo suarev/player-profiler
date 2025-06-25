@@ -53,15 +53,30 @@ export const analysisApi = {
 },
 
   // Get PCA visualization data
-async getPCAData(k?: number): Promise<PCAData> {
-  const url = k 
-    ? `${API_BASE_URL}/api/forwards/pca-data?k=${k}`
-    : `${API_BASE_URL}/api/forwards/pca-data`
-  
-  const response = await fetch(url)
-  if (!response.ok) throw new Error('Failed to fetch PCA data')
-  return response.json()
-},
+  async getPCAData(k?: number): Promise<PCAData> {
+    const url = k 
+      ? `${API_BASE_URL}/api/forwards/pca-data?k=${k}`
+      : `${API_BASE_URL}/api/forwards/pca-data`
+    
+    console.log('Fetching PCA data from:', url)  // Debug log
+    
+    try {
+      const response = await fetch(url)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('PCA API Error:', response.status, errorText)
+        throw new Error(`Failed to fetch PCA data: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('PCA data received:', data)  // Debug log
+      return data
+    } catch (error) {
+      console.error('PCA fetch error:', error)
+      throw error
+    }
+  },
 
   // Get available algorithms
   async getAlgorithms(): Promise<Algorithm[]> {

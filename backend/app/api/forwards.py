@@ -1,4 +1,3 @@
-# backend/app/api/forwards.py
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional  # ADD Optional here
 import pandas as pd
@@ -116,6 +115,7 @@ async def get_pca_data(k: Optional[int] = None):
         
         # Get PCA analyzer and compute with custom k if provided
         pca_analyzer = get_pca_analyzer()
+        print(f"Computing PCA with k={k}")  # Debug log
         pca_results = pca_analyzer.compute_pca(df, custom_k=k)  # Pass the k parameter
         
         # Format for response
