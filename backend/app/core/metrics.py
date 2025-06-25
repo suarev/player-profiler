@@ -5,13 +5,9 @@ FORWARD_METRICS = {
         "description": "Goals, xG conversion rate",
         "columns": [
             "performance_gls", 
-            "expected_npxg",
-            "expected_npxg_per_sh"
         ],
         "weights": {  # Internal weights for combining columns
             "performance_gls": 10,
-            "expected_npxg": 0.4,
-            "expected_npxg_per_sh": 0.2,
         }
     },
     "physical": {

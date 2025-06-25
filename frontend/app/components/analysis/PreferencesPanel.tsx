@@ -53,7 +53,7 @@ export default function PreferencesPanel({
           <MetricSlider
             key={metric.id}
             metric={metric}
-            value={weights[metric.id] || 50}
+            value={weights[metric.id] ?? 50}
             onChange={(value) => onWeightChange(metric.id, value)}
           />
         ))}
