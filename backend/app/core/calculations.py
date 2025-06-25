@@ -36,16 +36,28 @@ class PlayerAnalyzer:
             
             self.df = execute_query(query)
             
-            # Expand the JSON percentiles into columns
+            # Expand the JSON percentiles into columns more efficiently
             if not self.df.empty and 'percentiles' in self.df.columns:
                 import json
                 
-                # Parse JSON and create percentile columns
+                # Method 1: Collect all percentile data first, then create DataFrame
+                percentile_data = {}
+                
                 for idx, row in self.df.iterrows():
                     percentiles = json.loads(row['percentiles']) if isinstance(row['percentiles'], str) else row['percentiles']
                     for key, value in percentiles.items():
-                        self.df.at[idx, f"{key}_pct"] = value
+                        col_name = f"{key}_pct"
+                        if col_name not in percentile_data:
+                            percentile_data[col_name] = {}
+                        percentile_data[col_name][idx] = value
                 
+                # Create a new DataFrame from the collected data and join it all at once
+                if percentile_data:
+                    percentile_df = pd.DataFrame.from_dict(percentile_data)
+                    percentile_df.index = self.df.index
+                    # Join all columns at once to avoid fragmentation
+                    self.df = pd.concat([self.df, percentile_df], axis=1)
+            
             print(f"Loaded {len(self.df)} forwards with precomputed percentiles")
             
             # Convert numeric columns
@@ -58,7 +70,7 @@ class PlayerAnalyzer:
             print(f"Error loading data: {e}")
             # Fallback
             self._load_data_fallback()
-                
+                        
     def _compute_percentiles(self):
         """Compute percentile ranks for all numeric columns"""
         # First, identify truly numeric columns by trying to convert them
