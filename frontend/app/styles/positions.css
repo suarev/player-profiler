@@ -15,7 +15,7 @@
     padding: 3rem 4rem;
     z-index: 90;
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* Changed from space-between */
     align-items: center;
     background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
     opacity: 0;
@@ -28,7 +28,7 @@
     transform: translateY(0);
 }
 
-.back-link {
+/* .back-link {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -55,25 +55,56 @@
 .back-link svg {
     width: 16px;
     height: 16px;
-}
+} */
 
 /* Section Title */
 .section-title {
     display: flex;
     gap: 0.5rem;
     align-items: baseline;
-    font-size: 0.9rem;
+    font-size: 1.1rem; /* Increased from 0.9rem */
     letter-spacing: 0.15em;
+    position: relative;
+    overflow: hidden;
 }
 
 .title-text {
     color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
+    font-weight: 600; /* Increased from 500 */
+    font-size: 1.2rem; /* Add explicit size */
+    position: relative;
 }
 
 .title-accent {
     color: rgba(255, 255, 255, 0.4);
     font-weight: 300;
+    font-size: 1.2rem; /* Add explicit size */
+}
+
+/* Add the moving light effect */
+.section-title::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        transparent 100%
+    );
+    animation: lightSweep 3s ease-in-out infinite;
+}
+
+@keyframes lightSweep {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
 }
 
 /* Positions container */

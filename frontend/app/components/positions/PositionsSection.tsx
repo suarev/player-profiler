@@ -51,33 +51,26 @@ export default function PositionsSection({ scrolled }: PositionsSectionProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  return (
-    <section id="positions" className="positions-page">
-      {/* Minimal Header */}
-      <header className={`positions-header ${scrolled ? 'visible' : ''}`}>
-        <button onClick={scrollToTop} className="back-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          <span>BACK</span>
-        </button>
-        
-        <div className="section-title">
-          <span className="title-text">SELECT YOUR POSITION</span>
-          <span className="title-accent">TO ANALYZE</span>
-        </div>
-      </header>
-
-      {/* Positions Container */}
-      <div className="positions-container">
-        {positions.map((position, index) => (
-          <PositionColumn
-            key={position.name}
-            position={position}
-            index={index}
-          />
-        ))}
+return (
+  <section id="positions" className="positions-page">
+    {/* Minimal Header */}
+    <header className={`positions-header ${scrolled ? 'visible' : ''}`}>
+      <div className="section-title">
+        <span className="title-text">SELECT YOUR POSITION</span>
+        <span className="title-accent">TO ANALYZE</span>
       </div>
-    </section>
-  )
+    </header>
+
+    {/* Positions Container */}
+    <div className="positions-container">
+      {positions.map((position, index) => (
+        <PositionColumn
+          key={position.name}
+          position={position}
+          index={index}
+        />
+      ))}
+    </div>
+  </section>
+)
 }
