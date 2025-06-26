@@ -107,7 +107,7 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 120%; /* Make it taller so we have content to blur at bottom */
     background-size: cover;
     background-position: center;
     filter: blur(7px) grayscale(10%) brightness(0.4);
@@ -115,11 +115,43 @@
     transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.position-column:hover .player-bg {
-    filter: blur(0px) grayscale(0) brightness(0.6);
-    transform: scale(1.05);
+/* Add a pseudo-element that creates the blur extension */
+.player-bg::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 20%; /* Height of the blur extension */
+    background: inherit; /* Takes the same image */
+    background-position: center bottom;
+    filter: blur(20px); /* Heavy blur to create smear effect */
+    transform: scaleY(1.5) translateY(10%); /* Stretch it vertically */
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black 30%,
+        black 100%
+    );
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black 30%,
+        black 100%
+    );
 }
 
+.position-column:hover .player-bg {
+    filter: blur(0px) grayscale(0) brightness(0.6);
+    transform: scale(1.05) translateY(-15%);
+}
+
+.position-column:hover .player-bg::after {
+    opacity: 1;
+    filter: blur(30px); /* Even more blur on hover */
+}
 /* Overlay gradient */
 .overlay {
     position: absolute;
@@ -130,7 +162,7 @@
     background: linear-gradient(
         to bottom,
         rgba(0, 0, 0, 0.3) 0%,
-        rgba(0, 0, 0, 0.7) 50%,
+        rgba(0, 0, 0, 0.5) 70%,
         rgba(0, 0, 0, 0.9) 100%
     );
     transition: all 0.5s ease;
@@ -140,33 +172,70 @@
     background: linear-gradient(
         to bottom,
         rgba(0, 0, 0, 0.1) 0%,
-        rgba(0, 0, 0, 0.4) 50%,
-        rgba(0, 0, 0, 0.7) 100%
+        rgba(0, 0, 0, 0.2) 60%,
+        rgba(0, 0, 0, 0.3) 85%, /* Much more subtle at bottom */
+        rgba(0, 0, 0, 0.4) 100% /* Let the image fade do the work */
     );
 }
 
 /* Content */
 .position-content {
-    position: relative;
+    position: absolute;
+    width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: center; /* Center vertically initially */
+    align-items: center; /* Center horizontally */
     padding: 4rem 2rem;
     z-index: 2;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.position-column:hover .position-content {
+    justify-content: flex-end; /* Move to bottom on hover */
+    align-items: center; /* CHANGED from flex-start to center - keeps it centered */
 }
 
 .position-name {
-    font-size: clamp(1.5rem, 2vw, 2rem);
+    font-size: clamp(2rem, 2.5vw, 3rem);
     font-weight: 900;
     letter-spacing: -0.02em;
     margin-bottom: 0.5rem;
-    transition: all 0.3s ease;
-    transform-origin: left bottom;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+    text-align: center;
+    color: #fff; /* Keep white fill initially */
 }
 
+/* Add stroke for each position type BEFORE hover */
+.position-column.forwards .position-name {
+    -webkit-text-stroke: 0.5px #15a5ff; /* Red outline for forwards */
+    text-stroke: 2px #ff6b6b;
+}
+
+.position-column.midfielders .position-name {
+    -webkit-text-stroke: 0.5px #ff2723; /* Teal outline for midfielders */
+    text-stroke: 2px #4ecdc4;
+}
+
+.position-column.defenders .position-name {
+    -webkit-text-stroke: 0.5px #ffd323; /* Blue outline for defenders */
+    text-stroke: 2px #45b7d1;
+}
+
+.position-column.goalkeepers .position-name {
+    -webkit-text-stroke: 0.5px #28df8a; /* Green outline for goalkeepers */
+    text-stroke: 2px #96ceb4;
+}
+
+/* On hover - remove stroke and fill with color */
 .position-column:hover .position-name {
-    transform: scale(1.1);
+    font-size: clamp(1.5rem, 2vw, 2rem);
+    transform: scale(1);
+    text-align: center;
+    -webkit-text-stroke: 0px; /* Remove stroke on hover */
+    text-stroke: 0px;
 }
 
 /* Position subtitle */
@@ -178,11 +247,13 @@
     opacity: 0;
     transform: translateY(10px);
     transition: all 0.4s ease 0.1s;
+    text-align: center;
 }
 
 .position-column:hover .position-subtitle {
     opacity: 1;
     transform: translateY(0);
+    text-align: center; /* CHANGED from left to center */
 }
 
 /* Description */
@@ -191,34 +262,28 @@
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.4s ease 0.2s;
+    text-align: center;
 }
 
 .position-column:hover .position-description {
     opacity: 1;
     transform: translateY(0);
+    text-align: center; /* CHANGED from left to center */
 }
 
-.description-text {
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 2rem;
-}
-
-/* Stats */
+/* Stats - Center the stats container */
 .position-stats {
     display: flex;
     gap: 3rem;
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.4s ease 0.3s;
+    justify-content: center; /* ADD this line to center the stats */
 }
-
 .position-column:hover .position-stats {
     opacity: 1;
     transform: translateY(0);
 }
-
 .stat {
     display: flex;
     flex-direction: column;
@@ -240,22 +305,22 @@
 /* Color coding */
 .position-column.forwards:hover .position-name,
 .position-column.forwards:hover .stat-value {
-    color: #ff6b6b;
+    color: #15a5ff;
 }
 
 .position-column.midfielders:hover .position-name,
 .position-column.midfielders:hover .stat-value {
-    color: #4ecdc4;
+    color: #ff2723;
 }
 
 .position-column.defenders:hover .position-name,
 .position-column.defenders:hover .stat-value {
-    color: #45b7d1;
+    color: #ffd323;
 }
 
 .position-column.goalkeepers:hover .position-name,
 .position-column.goalkeepers:hover .stat-value {
-    color: #96ceb4;
+    color: #28df8a;
 }
 
 /* Vertical separator lines */
