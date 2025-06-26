@@ -11,7 +11,7 @@ const positions = [
     players: 127,
     profiles: 8,
     colorClass: 'forwards',
-    bgImage: '/images/positions/forward.png'
+    bgImage: '/images/forward.png'
   },
   {
     name: 'MIDFIELDERS',
@@ -20,7 +20,7 @@ const positions = [
     players: 234,
     profiles: 12,
     colorClass: 'midfielders',
-    bgImage: '/images/positions/midfielder.png'
+    bgImage: '/images/midfielder.png'
   },
   {
     name: 'DEFENDERS',
@@ -29,7 +29,7 @@ const positions = [
     players: 198,
     profiles: 10,
     colorClass: 'defenders',
-    bgImage: '/images/positions/defender.png'
+    bgImage: '/images/defender.png'
   },
   {
     name: 'GOALKEEPERS',
@@ -38,7 +38,7 @@ const positions = [
     players: 47,
     profiles: 5,
     colorClass: 'goalkeepers',
-    bgImage: '/images/positions/goalkeeper.png'
+    bgImage: '/images/goalkeeper.png'
   }
 ]
 
