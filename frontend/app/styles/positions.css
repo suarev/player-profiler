@@ -28,35 +28,6 @@
     transform: translateY(0);
 }
 
-/* .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: rgba(255, 255, 255, 0.6);
-    text-decoration: none;
-    font-size: 0.85rem;
-    letter-spacing: 0.1em;
-    transition: all 0.3s ease;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 30px;
-}
-
-.back-link:hover {
-    color: #fff;
-    transform: translateX(-5px);
-    border-color: rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.back-link svg {
-    width: 16px;
-    height: 16px;
-} */
-
 /* Section Title */
 .section-title {
     display: flex;
@@ -92,7 +63,7 @@
     background: linear-gradient(
         90deg, 
         transparent 0%, 
-        rgba(255, 255, 255, 0.2) 50%, 
+        rgba(255, 255, 255, 0.053) 50%, 
         transparent 100%
     );
     animation: lightSweep 3s ease-in-out infinite;
@@ -139,13 +110,13 @@
     height: 100%;
     background-size: cover;
     background-position: center;
-    filter: blur(30px) grayscale(100%) brightness(0.2);
+    filter: blur(7px) grayscale(10%) brightness(0.4);
     transform: scale(1.2);
     transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .position-column:hover .player-bg {
-    filter: blur(5px) grayscale(0) brightness(0.5);
+    filter: blur(0px) grayscale(0) brightness(0.6);
     transform: scale(1.05);
 }
 
