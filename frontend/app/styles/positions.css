@@ -210,23 +210,23 @@
 
 /* Add stroke for each position type BEFORE hover */
 .position-column.forwards .position-name {
-    -webkit-text-stroke: 0.5px #15a5ff; /* Red outline for forwards */
-    text-stroke: 2px #ff6b6b;
+    -webkit-text-stroke: 0.5px #1688CC; /* Red outline for forwards */
+    text-stroke: 2px #1688CC;
 }
 
 .position-column.midfielders .position-name {
-    -webkit-text-stroke: 0.5px #ff2723; /* Teal outline for midfielders */
-    text-stroke: 2px #4ecdc4;
+    -webkit-text-stroke: 0.5px #DC273D; /* Teal outline for midfielders */
+    text-stroke: 2px #DC273D;
 }
 
 .position-column.defenders .position-name {
-    -webkit-text-stroke: 0.5px #ffd323; /* Blue outline for defenders */
-    text-stroke: 2px #45b7d1;
+    -webkit-text-stroke: 0.5px #AFA15F; /* Blue outline for defenders */
+    text-stroke: 2px #AFA15F;
 }
 
 .position-column.goalkeepers .position-name {
-    -webkit-text-stroke: 0.5px #28df8a; /* Green outline for goalkeepers */
-    text-stroke: 2px #96ceb4;
+    -webkit-text-stroke: 0.5px #BE2F7A; /* Green outline for goalkeepers */
+    text-stroke: 2px #BE2F7A;
 }
 
 /* On hover - remove stroke and fill with color */
@@ -305,22 +305,22 @@
 /* Color coding */
 .position-column.forwards:hover .position-name,
 .position-column.forwards:hover .stat-value {
-    color: #15a5ff;
+    color: #1688CC;
 }
 
 .position-column.midfielders:hover .position-name,
 .position-column.midfielders:hover .stat-value {
-    color: #ff2723;
+    color: #DC273D;
 }
 
 .position-column.defenders:hover .position-name,
 .position-column.defenders:hover .stat-value {
-    color: #ffd323;
+    color: #AFA15F;
 }
 
 .position-column.goalkeepers:hover .position-name,
 .position-column.goalkeepers:hover .stat-value {
-    color: #28df8a;
+    color: #BE2F7A;
 }
 
 /* Vertical separator lines */

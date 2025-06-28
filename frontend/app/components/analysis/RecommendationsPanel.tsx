@@ -1,4 +1,8 @@
+'use client'
+
+import { useState } from 'react'
 import { PlayerRecommendation } from '@/app/types/analysis'
+import HorizontalPlayerCard from './HorizontalPlayerCard'
 
 interface RecommendationsPanelProps {
   recommendations: PlayerRecommendation[]
@@ -11,27 +15,26 @@ export default function RecommendationsPanel({
   loading, 
   variant = 'primary' 
 }: RecommendationsPanelProps) {
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(0)
   
-  // Show skeleton while loading (only for primary variant)
+  // Show skeleton while loading
   if (loading && variant === 'primary') {
     return (
       <div className="recommendations-panel">
         <h2 className="panel-title">TOP MATCHES</h2>
-        <div className="player-cards">
+        <div className="horizontal-cards-container">
           {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="player-card skeleton">
-              <div className="player-rank">{i}</div>
-              <div className="player-info">
-                <div className="skeleton-line" style={{ width: '150px', height: '24px' }} />
-                <div className="skeleton-line" style={{ width: '100px', height: '16px', marginTop: '8px' }} />
-                <div className="player-stats">
-                  <div className="skeleton-line" style={{ width: '60px', height: '20px' }} />
-                  <div className="skeleton-line" style={{ width: '60px', height: '20px' }} />
-                  <div className="skeleton-line" style={{ width: '60px', height: '20px' }} />
+            <div key={i} className="horizontal-player-card">
+              <div className="card-preview">
+                <div className="rank-badge skeleton-line">{i}</div>
+                <div className="player-photo-small skeleton-line" />
+                <div className="player-basic-info">
+                  <div className="skeleton-line" style={{ width: '150px', height: '20px' }} />
+                  <div className="skeleton-line" style={{ width: '100px', height: '16px', marginTop: '4px' }} />
                 </div>
-              </div>
-              <div className="match-score">
-                <div className="skeleton-line" style={{ width: '60px', height: '36px' }} />
+                <div className="match-score-display">
+                  <div className="skeleton-line" style={{ width: '60px', height: '36px' }} />
+                </div>
               </div>
             </div>
           ))}
@@ -40,61 +43,31 @@ export default function RecommendationsPanel({
     )
   }
 
-  // Secondary variant - more compact
+  // We don't use secondary variant anymore
   if (variant === 'secondary') {
-    return (
-      <div className="secondary-player-cards">
-        {recommendations.map((player, index) => (
-          <div key={player.player_id} className="secondary-player-card">
-            <div className="secondary-rank">{index + 6}</div>
-            <div className="secondary-player-info">
-              <h4>{player.name}</h4>
-              <span className="secondary-team">{player.team}</span>
-            </div>
-            <div className="secondary-score">
-             <span className="secondary-score-value">{player.match_score.toFixed(1)}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    )
+    return null
   }
 
-  // Primary variant - full details
+  // Primary variant - horizontal expandable cards
   return (
     <div className="recommendations-panel">
       <h2 className="panel-title">TOP MATCHES</h2>
-      <div className="player-cards">
+      <div className="horizontal-cards-container">
         {recommendations.map((player, index) => (
-          <div key={player.player_id} className="player-card">
-            <div className="player-rank">{index + 1}</div>
-            <div className="player-info">
-              <h3>{player.name}</h3>
-              <p className="player-team">{player.team}</p>
-              <div className="player-stats">
-                <div className="mini-stat">
-                  <span className="mini-stat-value">{player.key_stats.goals}</span>
-                  <span className="mini-stat-label">goals</span>
-                </div>
-                <div className="mini-stat">
-                  <span className="mini-stat-value">{player.key_stats.xG.toFixed(1)}</span>
-                  <span className="mini-stat-label">xG</span>
-                </div>
-                <div className="mini-stat">
-                  <span className="mini-stat-value">{player.key_stats.shots}</span>
-                  <span className="mini-stat-label">shots</span>
-                </div>
-                  <div className="mini-stat">
-                  <span className="mini-stat-value">{player.key_stats.assists}</span>
-                  <span className="mini-stat-label">assists</span>
-                </div>
-              </div>
-            </div>
-            <div className="match-score">
-              <div className="score-value">{player.match_score.toFixed(1)}</div>
-              <div className="score-label">MATCH</div>
-            </div>
-          </div>
+          <HorizontalPlayerCard
+            key={player.player_id}
+            player={{
+              ...player,
+              rank: index + 1,
+              age: 25, // You'll need to add this from your data
+              nationality: 'N/A', // You'll need to add this from your data
+              photo: undefined, // Add when you have photo URLs
+              percentiles: player.percentile_ranks as any
+            }}
+            isExpanded={expandedIndex === index}
+            onHover={() => setExpandedIndex(index)}
+            onLeave={() => setExpandedIndex(null)}
+          />
         ))}
       </div>
     </div>
