@@ -186,22 +186,32 @@ class PlayerAnalyzer:
                     "key_stats": key_stats,
                     "percentile_ranks": percentiles
                 })
-            
-            # If we don't have enough real recommendations, add mock data
-            if len(recommendations) < limit:
-                mock_players = [
-                    {
-                        "player_id": 999,
-                        "name": "Sample Player",
-                        "team": "Sample Team",
-                        "position": "FW",
-                        "match_score": 75.0,
-                        "key_stats": {"goals": 15.0, "xG/90": 0.65, "shots/90": 3.2, "assists": 5.0},
-                        "percentile_ranks": {k: 75.0 for k in weights.keys()}
-                    }
+
+                # NOW ADD THE RAW PERCENTILES FOR RADAR CHART
+                raw_percentiles = [
+                    'performance_gls_pct',
+                    'expected_npxg_pct', 
+                    'standard_sot_pct',
+                    'performance_ast_pct',
+                    'expected_xag_pct',
+                    'kp_pct',
+                    'take_ons_succ_pct',
+                    'aerial_duels_wonpct_pct',
+                    'touches_att_pen_pct',
+                    'carries_prgc_pct'
                 ]
-                recommendations.extend(mock_players[:limit - len(recommendations)])
+
+                for pct_col in raw_percentiles:
+                    if pct_col in player_data.index:
+                        val = player_data[pct_col]
+                        if pd.notna(val):
+                            percentiles[pct_col] = float(val)
+                        else:
+                            percentiles[pct_col] = 50.0
+                    else:
+                        percentiles[pct_col] = 50.0
             
+        
             return recommendations
             
         except Exception as e:
