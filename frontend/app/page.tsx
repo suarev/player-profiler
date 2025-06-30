@@ -6,7 +6,7 @@ import FilmGrain from './components/ui/FilmGrain'
 import Navigation from './components/ui/Navigation'
 import StadiumBackground from './components/home/StadiumBackground'
 import HeroSection from './components/home/HeroSection'
-import PositionsSection from './components/positions/PositIonsSection'
+import PositionsSection from './components/positions/PositionsSection'
 
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
