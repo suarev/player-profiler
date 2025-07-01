@@ -190,7 +190,7 @@ class PlayerAnalyzer:
                 # NOW ADD THE RAW PERCENTILES FOR RADAR CHART
                 raw_percentiles = [
                     'performance_gls_pct',
-                    'expected_npxg_pct', 
+                    'per_90_minutes_npxg_pct', 
                     'standard_sot_pct',
                     'performance_ast_pct',
                     'expected_xag_pct',

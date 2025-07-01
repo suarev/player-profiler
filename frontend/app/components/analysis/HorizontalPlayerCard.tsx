@@ -26,7 +26,7 @@ interface HorizontalPlayerCardProps {
       box_presence: number
       // Add these:
       performance_gls_pct?: number
-      expected_npxg_pct?: number
+      per_90_minutes_npxg_pct?: number
       standard_sot_pct?: number
       performance_ast_pct?: number
       expected_xag_pct?: number
@@ -61,7 +61,7 @@ const topStats = [
   // Full radar chart metrics - ACTUAL METRICS
   const radarMetrics = [
     { key: 'performance_gls_pct', label: 'Goals', value: player.percentiles?.performance_gls_pct || 50 },
-    { key: 'expected_npxg_pct', label: 'npxG', value: player.percentiles?.expected_npxg_pct || 50 },
+    { key: 'P90M_npxg_pct', label: 'xG', value: player.percentiles?.per_90_minutes_npxg_pct || 50 },
     { key: 'standard_sot_pct', label: 'SoT%', value: player.percentiles?.standard_sot_pct || 50 },
     { key: 'performance_ast_pct', label: 'Assists', value: player.percentiles?.performance_ast_pct || 50 },
     { key: 'expected_xag_pct', label: 'xA', value: player.percentiles?.expected_xag_pct || 50 },
@@ -72,6 +72,41 @@ const topStats = [
     { key: 'carries_prgc_pct', label: 'ProgCarry', value: player.percentiles?.carries_prgc_pct || 50 }
   ]
 
+  // ADD THIS DEBUG CODE - FIXED VERSION
+  React.useEffect(() => {
+    if (isExpanded) {
+      console.log(`\n🎯 RADAR DATA FOR: ${player.name} (${player.team})`)
+      console.log('=====================================')
+      
+      radarMetrics.forEach(metric => {
+        // Type-safe way to access the value
+        const actualValue = player.percentiles?.[metric.key as keyof typeof player.percentiles]
+        const exists = actualValue !== undefined && actualValue !== null
+        const displayValue = metric.value
+        
+        console.log(
+          `${metric.label.padEnd(10)} (${metric.key}): ${
+            exists 
+              ? `✅ ${displayValue.toFixed(1)}` 
+              : `❌ MISSING (defaulted to ${displayValue})`
+          }`
+        )
+      })
+      
+      // Also log all available percentiles
+      console.log('\n📊 ALL AVAILABLE PERCENTILES:')
+      if (player.percentiles) {
+        Object.entries(player.percentiles).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            console.log(`  ${key}: ${value}`)
+          }
+        })
+      } else {
+        console.log('  No percentiles object found!')
+      }
+      console.log('=====================================\n')
+    }
+  }, [isExpanded, player])
   // Calculate radar points for expanded view
   const centerX = 120  // Increased
   const centerY = 120  // Increased
@@ -175,21 +210,21 @@ React.useEffect(() => {
           <p className="player-team-pos">{player.team} • {player.position}</p>
         </div>
 
-        {/* Mini stat dots for collapsed view */}
-        <div className="mini-stats">
-          {topStats.map((stat, i) => (
-            <div key={i} className="mini-stat-item">
-              <div className="mini-stat-bar">
-                <div 
-                  className="mini-stat-fill" 
-                  style={{ height: `${stat.value}%` }}
-                />
+          {/* Mini stats */}
+          <div className="mini-stats">
+            {topStats.map((stat, i) => (
+              <div key={i} className="mini-stat-item">
+                <div className="mini-stat-hover-value">{stat.value.toFixed(2)}</div>
+                <div className="mini-stat-bar">
+                  <div 
+                    className="mini-stat-fill" 
+                    style={{ height: `${stat.value}%` }}
+                  />
+                </div>
+                <span className="mini-stat-label">{stat.label}</span>
               </div>
-              <span className="mini-stat-label">{stat.label}</span>
-            </div>
-          ))}
-        </div>
-
+            ))}
+          </div>
         <div className="match-score-display">
           <div className="score-number">{player.match_score.toFixed(0)}</div>
           <div className="score-text">MATCH</div>
@@ -268,17 +303,35 @@ React.useEffect(() => {
               strokeWidth="2"
             />
 
-            {/* Points */}
+            {/* Points with hover */}
             {radarPoints.map((point, i) => (
-              <g key={i}>
+              <g key={i} className="radar-point-group">
                 <circle
                   cx={point.x}
                   cy={point.y}
                   r="4"
                   fill="#ff6b6b"
                   className="radar-point"
-                  data-value={radarMetrics[i].value.toFixed(2)}
+                  style={{ cursor: 'pointer' }}
                 />
+                {/* Hover value - positioned above the point */}
+                <text
+                  x={point.x}
+                  y={point.y - 10}
+                  textAnchor="middle"
+                  className="radar-hover-value"
+                  fill="white"
+                  fontSize="11"
+                  fontWeight="600"
+                  style={{
+                    opacity: 0,
+                    transition: 'opacity 0.2s ease',
+                    pointerEvents: 'none',
+                    filter: 'drop-shadow(0 0 3px rgba(0,0,0,0.8))'
+                  }}
+                >
+                  {radarMetrics[i].value.toFixed(2)}
+                </text>
               </g>
             ))}
 
@@ -301,22 +354,6 @@ React.useEffect(() => {
                 </text>
               )
             })}
-
-            {/* Hover tooltip group */}
-            <g className="radar-tooltip-group" style={{ display: 'none' }}>
-              <rect 
-                className="tooltip-bg"
-                rx="4"
-                fill="rgba(0, 0, 0, 0.9)"
-                stroke="rgba(255, 255, 255, 0.2)"
-              />
-              <text 
-                className="tooltip-text"
-                fill="white"
-                fontSize="12"
-                fontWeight="600"
-              />
-            </g>
           </svg>
         </div>
 

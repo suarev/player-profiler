@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PlayerRecommendation } from '@/app/types/analysis'
 import HorizontalPlayerCard from './HorizontalPlayerCard'
+import { analysisApi } from '@/app/services/analysisApi'
 
 interface RecommendationsPanelProps {
   recommendations: PlayerRecommendation[]
@@ -15,7 +16,22 @@ export default function RecommendationsPanel({
   loading, 
   variant = 'primary' 
 }: RecommendationsPanelProps) {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(0)
+  const [expandedIndex, setExpandedIndex] = useState<number>(0) // Default to first card
+  const [algorithms, setAlgorithms] = useState<Algorithm[]>([])
+  const lastHoveredRef = useRef<number>(0) // Track last hovered
+
+  useEffect(() => {
+    loadAlgorithms()
+  }, [])
+
+  const loadAlgorithms = async () => {
+    try {
+      const data = await analysisApi.getAlgorithms()
+      setAlgorithms(data)
+    } catch (error) {
+      console.error('Failed to load algorithms:', error)
+    }
+  }
   
   // Show skeleton while loading
   if (loading && variant === 'primary') {
@@ -65,8 +81,14 @@ export default function RecommendationsPanel({
               percentiles: player.percentile_ranks as any
             }}
             isExpanded={expandedIndex === index}
-            onHover={() => setExpandedIndex(index)}
-            onLeave={() => setExpandedIndex(null)}
+            onHover={() => {
+              setExpandedIndex(index)
+              lastHoveredRef.current = index
+            }}
+            onLeave={() => {
+              // Don't collapse - keep the last hovered one expanded
+              // The expandedIndex stays as is
+            }}
           />
         ))}
       </div>
