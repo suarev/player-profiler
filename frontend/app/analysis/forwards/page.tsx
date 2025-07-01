@@ -141,7 +141,8 @@ export default function ForwardAnalysisPage() {
               <BenchRecommendations 
                 players={recommendations.slice(5, 10).map((player, index) => ({
                   ...player,
-                  rank: index + 6
+                  rank: index + 6,
+                  image_url: player.image_url  // ADD THIS LINE
                 }))}
               />
             )}

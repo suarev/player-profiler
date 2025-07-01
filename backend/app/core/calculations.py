@@ -3,6 +3,7 @@ import numpy as np
 from typing import Dict, List, Tuple
 from app.core.database import execute_query
 from app.core.metrics import FORWARD_METRICS
+from app.services.player_images import player_image_service
 
 class PlayerAnalyzer:
     def __init__(self):
@@ -135,6 +136,7 @@ class PlayerAnalyzer:
         
         return scores_df.sort_values('final_score', ascending=False)
 
+    # Update the get_recommendations method (partial update showing the changed section)
     def get_recommendations(self, weights: Dict[str, float], algorithm: str = "weighted_score", limit: int = 3):
         """Get top player recommendations"""
         try:
@@ -150,6 +152,24 @@ class PlayerAnalyzer:
                 # Safely get stats with defaults
                 n_90s = float(player_data.get('n_90s', 1)) if pd.notna(player_data.get('n_90s')) else 1.0
                 n_90s = max(n_90s, 0.1)  # Avoid division by zero
+                
+                # Get player name and team
+                player_name = player['name']
+                player_team = player.get('team', 'Unknown')
+                
+                # Get player image
+                player_image = None
+                try:
+                    # Try to get image from Google Custom Search
+                    player_image = player_image_service.search_player_image(player_name, player_team)
+                    
+                    # If no image found, use fallback
+                    if not player_image:
+                        player_image = player_image_service.get_fallback_image(player_name)
+                        
+                except Exception as e:
+                    print(f"Error getting image for {player_name}: {e}")
+                    player_image = player_image_service.get_fallback_image(player_name)
                 
                 key_stats = {
                     "goals": float(player_data.get('performance_gls', 0)) if pd.notna(player_data.get('performance_gls')) else 0.0,
@@ -177,20 +197,10 @@ class PlayerAnalyzer:
                         else:
                             percentiles[metric_id] = 50.0  # Default to average
                 
-                recommendations.append({
-                    "player_id": int(player['player_id']),
-                    "name": player['name'],
-                    "team": player.get('team', 'Unknown'),
-                    "position": player.get('position', 'FW'),
-                    "match_score": float(player.get('final_score', 0)),
-                    "key_stats": key_stats,
-                    "percentile_ranks": percentiles
-                })
-
-                # NOW ADD THE RAW PERCENTILES FOR RADAR CHART
+                # Add raw percentiles for radar chart
                 raw_percentiles = [
                     'performance_gls_pct',
-                    'per_90_minutes_npxg_pct', 
+                    'expected_npxg_pct', 
                     'standard_sot_pct',
                     'performance_ast_pct',
                     'expected_xag_pct',
@@ -210,7 +220,17 @@ class PlayerAnalyzer:
                             percentiles[pct_col] = 50.0
                     else:
                         percentiles[pct_col] = 50.0
-            
+                
+                recommendations.append({
+                    "player_id": int(player['player_id']),
+                    "name": player_name,
+                    "team": player_team,
+                    "position": player.get('position', 'FW'),
+                    "match_score": float(player.get('final_score', 0)),
+                    "key_stats": key_stats,
+                    "percentile_ranks": percentiles,
+                    "image_url": player_image  # ADD THIS LINE
+                })
         
             return recommendations
             
@@ -224,7 +244,8 @@ class PlayerAnalyzer:
                     "team": "N/A",
                     "position": "FW",
                     "match_score": 0.0,
-                    "key_stats": {"goals": 0.0, "xG/90": 0.0, "shots/90": 0.0, "assists": 0.0},
-                    "percentile_ranks": {k: 50.0 for k in weights.keys()}
+                    "key_stats": {"goals": 0.0, "xG": 0.0, "shots": 0.0, "assists": 0.0},
+                    "percentile_ranks": {k: 50.0 for k in weights.keys()},
+                    "image_url": None
                 }
             ]

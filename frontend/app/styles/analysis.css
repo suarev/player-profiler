@@ -1425,3 +1425,211 @@
 .mini-stat-item:hover .mini-stat-hover-value {
     opacity: 1;
 }
+
+/* Add these styles to your frontend/app/styles/analysis.css file */
+
+/* Player Photo Styling Updates */
+.player-photo-small {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* Photo wrapper for better control */
+.photo-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: radial-gradient(ellipse at center, rgba(255, 107, 107, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+.player-photo-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top; /* Focus on face/upper body */
+    filter: contrast(1.1) brightness(0.95); /* Slightly enhance for dark theme */
+    transition: all 0.3s ease;
+}
+
+/* Hover effect on the whole card affects image */
+.horizontal-player-card:hover .player-photo-small {
+    border-color: rgba(255, 107, 107, 0.3);
+    transform: scale(1.05);
+}
+
+.horizontal-player-card:hover .player-photo-small img {
+    filter: contrast(1.2) brightness(1) saturate(1.1);
+}
+
+/* Expanded state photo */
+.horizontal-player-card.expanded .player-photo-small {
+    width: 60px;
+    height: 60px;
+    border-color: rgba(255, 107, 107, 0.4);
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.2);
+}
+
+/* Loading/Error states */
+.photo-placeholder-small {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.photo-placeholder-small.hidden {
+    display: none;
+}
+
+.photo-placeholder-small svg {
+    width: 24px;
+    height: 24px;
+    opacity: 0.5;
+}
+
+/* Add subtle animation when image loads */
+@keyframes imageLoad {
+    from {
+        opacity: 0;
+        filter: blur(10px);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+.player-photo-small img {
+    animation: imageLoad 0.5s ease;
+}
+
+/* For top 3 players, add special glow */
+.horizontal-player-card:nth-child(-n+3) .player-photo-small {
+    box-shadow: 0 0 10px rgba(255, 107, 107, 0.1);
+}
+
+/* Rank 1 special treatment */
+.horizontal-player-card:first-child .player-photo-small {
+    border-color: rgba(255, 107, 107, 0.3);
+    background: radial-gradient(ellipse at center, rgba(255, 107, 107, 0.15) 0%, transparent 70%);
+}
+
+/* Handle different aspect ratios gracefully */
+.player-photo-small img {
+    /* For portraits */
+    object-fit: cover;
+    
+    /* For landscape images, zoom in on face */
+    object-position: center 20%;
+}
+
+/* Dark overlay gradient for better text contrast */
+.photo-wrapper::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+    pointer-events: none;
+}
+
+/* Shimmer effect while loading */
+@keyframes shimmerPhoto {
+    0% {
+        background-position: -200px 0;
+    }
+    100% {
+        background-position: 200px 0;
+    }
+}
+
+.player-photo-small.loading {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    background-size: 200px 100%;
+    animation: shimmerPhoto 1.5s infinite;
+}
+
+/* Bench Player Photo Styles */
+.bench-player-photo {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.bench-player-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    filter: contrast(1.05) brightness(0.9);
+}
+
+.bench-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.bench-photo-placeholder.hidden {
+    display: none;
+}
+
+.bench-photo-placeholder svg {
+    width: 20px;
+    height: 20px;
+    opacity: 0.4;
+}
+
+/* Hover effects */
+.bench-player-card:hover .bench-player-photo {
+    border-color: rgba(255, 107, 107, 0.3);
+    transform: scale(1.05);
+}
+
+.bench-player-card:hover .bench-player-photo img {
+    filter: contrast(1.1) brightness(1);
+}
+
+/* Update the bench card layout to accommodate photo */
+.bench-player-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem; /* Reduced gap */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    aspect-ratio: 1;
+    overflow: hidden;
+    position: relative;
+}

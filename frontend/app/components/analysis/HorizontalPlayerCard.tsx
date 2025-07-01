@@ -10,7 +10,7 @@ interface HorizontalPlayerCardProps {
     rank: number
     age?: number
     nationality?: string
-    photo?: string
+    image_url?: string
     key_stats: {
       goals: number
       xG: number
@@ -194,8 +194,23 @@ React.useEffect(() => {
         <div className="rank-badge">{player.rank}</div>
         
         <div className="player-photo-small">
-          {player.photo ? (
-            <img src={player.photo} alt={player.name} />
+          {player.image_url ? (
+            <div className="photo-wrapper">
+              <img 
+                src={player.image_url} 
+                alt={player.name}
+                onError={(e) => {
+                  // Fallback to placeholder on error
+                  e.currentTarget.style.display = 'none'
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                }}
+              />
+              <div className="photo-placeholder-small hidden">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+                </svg>
+              </div>
+            </div>
           ) : (
             <div className="photo-placeholder-small">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">

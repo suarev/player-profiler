@@ -25,6 +25,7 @@ export interface PlayerRecommendation {
     assists: number
   }
   percentile_ranks: Record<string, number>
+  image_url?: string  // ADD THIS LINE
 }
 
 export interface RecommendationResponse {

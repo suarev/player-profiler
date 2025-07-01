@@ -77,7 +77,7 @@ export default function RecommendationsPanel({
               rank: index + 1,
               age: 25, // You'll need to add this from your data
               nationality: 'N/A', // You'll need to add this from your data
-              photo: undefined, // Add when you have photo URLs
+              image_url:player.image_url, // Add when you have photo URLs
               percentiles: player.percentile_ranks as any
             }}
             isExpanded={expandedIndex === index}

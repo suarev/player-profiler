@@ -22,6 +22,7 @@ class PlayerRecommendation(BaseModel):
     match_score: float
     key_stats: Dict[str, float]
     percentile_ranks: Dict[str, float]
+    image_url: Optional[str] = None  # ADD THIS LINE
 
 class RecommendationResponse(BaseModel):
     """Response with top player recommendations"""
