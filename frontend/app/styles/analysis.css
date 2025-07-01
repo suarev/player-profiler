@@ -433,83 +433,6 @@
     overflow: hidden;
 }
 
-/* Bench Container Styles */
-.bench-container {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1.5rem;
-    height: 32%; /* Adjusted */
-    display: flex;
-    flex-direction: column;
-}
-
-.bench-title {
-    font-size: 0.8rem;
-    letter-spacing: 0.2em;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 1rem;
-}
-
-.bench-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.75rem;
-    flex: 1;
-}
-
-.bench-player-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1rem; /* Increased padding */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem; /* Increased gap */
-    cursor: pointer;
-    transition: all 0.3s ease;
-    aspect-ratio: 1;
-    overflow: hidden;
-    position: relative; /* For hover effects */
-}
-.bench-player-card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 107, 107, 0.2);
-    transform: translateY(-2px);
-}
-
-.bench-rank {
-    font-size: 1rem; /* Increased from 0.8rem */
-    color: rgba(255, 107, 107, 0.5);
-    font-weight: 700;
-}
-
-.bench-player-info {
-    text-align: center;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.bench-name {
-    font-size: 0.85rem; /* Increased from 0.7rem */
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.2;
-    text-align: center;
-    word-break: break-word;
-}
-.bench-team {
-    font-size: 0.7rem; /* Increased from 0.65rem */
-    color: rgba(255, 255, 255, 0.4);
-}
-
-.bench-score {
-    font-size: 1.6rem; /* Increased from 1.2rem */
-    font-weight: 900;
-    color: #ff6b6b;
-}
 
 /* Skeleton Loading */
 .player-card.skeleton {
@@ -1566,17 +1489,68 @@
     animation: shimmerPhoto 1.5s infinite;
 }
 
-/* Bench Player Photo Styles */
-.bench-player-photo {
-    width: 40px;
-    height: 40px;
+/* Bench Container Styles */
+.bench-container {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 0.5rem 0;
-    position: relative;
+    padding: 1.5rem;
+    height: 32%;
+    display: flex;
+    flex-direction: column;
+}
+
+.bench-title {
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1rem;
+}
+
+.bench-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.75rem;
+    flex: 1;
+}
+
+/* UPDATED BENCH PLAYER CARD */
+.bench-player-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
     transition: all 0.3s ease;
+    min-height: 140px; /* Ensure minimum height */
+}
+
+.bench-player-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 107, 107, 0.2);
+    transform: translateY(-2px);
+}
+
+.bench-rank {
+    font-size: 0.9rem;
+    color: rgba(255, 107, 107, 0.5);
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+}
+
+/* UPDATED PHOTO STYLES */
+.bench-player-photo {
+    width: 45px;
+    height: 45px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+    margin: 0.4rem 0;
 }
 
 .bench-player-photo img {
@@ -1584,7 +1558,7 @@
     height: 100%;
     object-fit: cover;
     object-position: center top;
-    filter: contrast(1.05) brightness(0.9);
+    display: block; /* Ensure it's block level */
 }
 
 .bench-photo-placeholder {
@@ -1594,42 +1568,50 @@
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, rgba(255, 107, 107, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
-    color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.3);
 }
 
 .bench-photo-placeholder.hidden {
-    display: none;
+    display: none !important;
 }
 
 .bench-photo-placeholder svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     opacity: 0.4;
 }
 
-/* Hover effects */
+.bench-player-info {
+    text-align: center;
+    margin: 0.3rem 0;
+}
+
+.bench-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.2;
+    margin-bottom: 0.2rem;
+}
+
+.bench-team {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.bench-score {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #ff6b6b;
+    margin-top: auto;
+}
+
+/* Hover effects for bench photos */
 .bench-player-card:hover .bench-player-photo {
     border-color: rgba(255, 107, 107, 0.3);
-    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(255, 107, 107, 0.2);
 }
 
 .bench-player-card:hover .bench-player-photo img {
-    filter: contrast(1.1) brightness(1);
-}
-
-/* Update the bench card layout to accommodate photo */
-.bench-player-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem; /* Reduced gap */
-    cursor: pointer;
-    transition: all 0.3s ease;
-    aspect-ratio: 1;
-    overflow: hidden;
-    position: relative;
+    filter: contrast(1.1) brightness(1.05);
 }

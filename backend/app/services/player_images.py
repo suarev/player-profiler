@@ -67,7 +67,7 @@ class PlayerImageService:
             
         try:
             # Build search query - optimized for football player headshots
-            query = f"{player_name} profile face image TRANSPARENT"
+            query = f"{player_name} face image TRANSPARENT"
             
             # API endpoint
             url = "https://www.googleapis.com/customsearch/v1"
