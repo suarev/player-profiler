@@ -1,14 +1,19 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
+from contextlib import asynccontextmanager
 from app.core.init_db import init_database
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    init_database()
+    yield
+    # Shutdown
 
-# Import routers after creating app
 app = FastAPI(
     title="LENS Player Profiler API",
     description="API for football player profiling and recommendations",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Import here to avoid circular imports
