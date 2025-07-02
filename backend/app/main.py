@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+from app.core.init_db import init_database
+
 
 # Import routers after creating app
 app = FastAPI(
@@ -21,10 +23,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Include routers
 app.include_router(forwards.router, prefix="/api/forwards", tags=["forwards"])
 app.include_router(algorithms.router, prefix="/api/algorithms", tags=["algorithms"])
 app.include_router(stats.router, prefix="/api/stats", tags=["stats"])
+
+
 
 @app.get("/")
 async def root():
@@ -33,3 +38,8 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+# Add after creating the app
+@app.on_event("startup")
+async def startup_event():
+    init_database()
