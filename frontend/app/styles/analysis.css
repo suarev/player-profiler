@@ -67,7 +67,7 @@
     font-size: 2.5rem;
     font-weight: 900;
     letter-spacing: -0.02em;
-    color: #ff6b6b;
+    color: var(--position-color);
     margin: 0 auto;
 }
 
@@ -168,7 +168,7 @@
     justify-content: center;
     font-size: 1.4rem;
     font-weight: 900;
-    color: #ff6b6b;
+    color: var(--position-color);
     flex-shrink: 0;
 }
 
@@ -252,7 +252,7 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    background: linear-gradient(to top, #ff6b6b, #ff8787);
+    background: linear-gradient(to top, var(--position-color), #ff8787);
     border-radius: 2px;
     transition: height 0.6s ease;
 }
@@ -272,7 +272,7 @@
 .score-number {
     font-size: 2rem;
     font-weight: 900;
-    color: #ff6b6b;
+    color: var(--position-color);
     line-height: 1;
 }
 
@@ -418,7 +418,7 @@
 }
 
 .horizontal-player-card:hover .mini-stat-fill {
-    background: linear-gradient(to top, #ff6b6b, #ffa0a0);
+    background: linear-gradient(to top, var(--position-color), #ffa0a0);
 }
 
 /* Update recommendations panel padding */
@@ -574,7 +574,7 @@
 
 .slider-value {
     font-size: 0.9rem; /* Increased from 0.7rem */
-    color: #ff6b6b;
+    color: var(--position-color);
     font-weight: 700;
     min-width: 30px;
     text-align: right;
@@ -602,7 +602,7 @@
     top: 50%;
     transform: translateY(-50%);
     height: 2px;
-    background: #ff6b6b;
+    background: var(--position-color);
     transition: width 0.2s ease;
     pointer-events: none;
 }
@@ -614,7 +614,7 @@
     width: 10px;
     height: 10px;
     background: #fff;
-    border: 2px solid #ff6b6b;
+    border: 2px solid var(--position-color);
     cursor: grab;
     transition: transform 0.2s ease;
 }
@@ -727,7 +727,7 @@
 
 .all-leagues-tag {
   background: rgba(255, 107, 107, 0.1);
-  color: #ff6b6b;
+  color: var(--position-color);
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
   font-size: 0.8rem;
@@ -755,7 +755,7 @@
 }
 
 .remove-league:hover {
-  color: #ff6b6b;
+  color: var(--position-color);
 }
 
 .league-dropdown {
@@ -797,7 +797,7 @@
   padding: 0.8rem 1rem;
   background: rgba(255, 107, 107, 0.1);
   border: none;
-  color: #ff6b6b;
+  color: var(--position-color);
   cursor: pointer;
   text-align: left;
   transition: all 0.3s ease;
@@ -823,7 +823,7 @@
 .league-option input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #ff6b6b;
+  accent-color: var(--position-color);
 }
 
 
@@ -1131,7 +1131,7 @@
 .cluster-toggle-btn.active {
     background: rgba(255, 107, 107, 0.1);
     border-color: rgba(255, 107, 107, 0.3);
-    color: #ff6b6b;
+    color: var(--position-color);
 }
 
 .cluster-toggle-label {
@@ -1321,7 +1321,7 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    background: linear-gradient(to top, #ff6b6b, #ff8787);
+    background: linear-gradient(to top, var(--position-color), #ff8787);
     border-radius: 2px;
     transition: height 0.6s ease;
 }
@@ -1602,7 +1602,7 @@
 .bench-score {
     font-size: 1.4rem;
     font-weight: 900;
-    color: #ff6b6b;
+    color: var(--position-color);
     margin-top: auto;
 }
 

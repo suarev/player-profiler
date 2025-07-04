@@ -172,7 +172,7 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
     const uniqueClusters = Array.from(new Set(data.points.map(p => p.cluster).filter(Boolean))) as string[]
     const colorScale = d3.scaleOrdinal<string>()
       .domain(uniqueClusters)
-      .range(['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#f9ca24', '#f0932b', '#6c5ce7', '#a29bfe'])
+      .range(['var(--position-color)', '#4ecdc4', '#45b7d1', '#96ceb4', '#f9ca24', '#f0932b', '#6c5ce7', '#a29bfe'])
 
     // Add cluster labels BEFORE points so they're behind
     if (data.cluster_centers && data.cluster_centers.length > 0) {
@@ -288,7 +288,7 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
   const uniqueClusters = Array.from(new Set(data.points.map(p => p.cluster).filter(Boolean))) as string[]
   const colorScale = d3.scaleOrdinal<string>()
     .domain(uniqueClusters)
-    .range(['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#f9ca24', '#f0932b', '#6c5ce7', '#a29bfe'])
+    .range(['var(--position-color)', '#4ecdc4', '#45b7d1', '#96ceb4', '#f9ca24', '#f0932b', '#6c5ce7', '#a29bfe'])
 
   return (
     <div className="pca-viz-container" ref={containerRef}>

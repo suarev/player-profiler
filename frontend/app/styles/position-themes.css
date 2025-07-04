@@ -1,0 +1,281 @@
+/* Position-specific color themes */
+:root {
+  --forward-color: #1688CC;
+  --midfielder-color: #DC273D;
+  --defender-color: #AFA15F;
+  --goalkeeper-color: #BE2F7A;
+}
+
+/* Forward Theme */
+.analysis-forward {
+  --position-color: var(--forward-color);
+}
+
+.position-forward .position-title {
+  color: var(--forward-color);
+}
+
+.position-forward .slider-value,
+.position-forward .slider-fill,
+.position-forward .slider-thumb {
+  color: var(--forward-color);
+  background-color: var(--forward-color);
+  border-color: var(--forward-color);
+}
+
+.position-forward .score-value,
+.position-forward .mini-stat-value,
+.position-forward .rank-badge {
+  color: var(--forward-color);
+  border-color: rgba(22, 136, 204, 0.3);
+}
+
+.position-forward .mini-stat-fill {
+  background: linear-gradient(to top, var(--forward-color), rgba(22, 136, 204, 0.7));
+}
+
+.position-forward .horizontal-player-card:hover {
+  border-color: rgba(22, 136, 204, 0.3);
+}
+
+.position-forward .horizontal-light-sweep {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(22, 136, 204, 0.05),
+    transparent
+  );
+}
+
+.position-forward .bench-score {
+  color: var(--forward-color);
+}
+
+.position-forward .radar-chart-small path {
+  fill: rgba(22, 136, 204, 0.2);
+  stroke: var(--forward-color);
+}
+
+.position-forward .radar-point {
+  fill: var(--forward-color);
+}
+
+/* Midfielder Theme */
+.analysis-midfielder {
+  --position-color: var(--midfielder-color);
+}
+
+.position-midfielder .position-title {
+  color: var(--midfielder-color);
+}
+
+.position-midfielder .slider-value,
+.position-midfielder .slider-fill,
+.position-midfielder .slider-thumb {
+  color: var(--midfielder-color);
+  background-color: var(--midfielder-color);
+  border-color: var(--midfielder-color);
+}
+
+.position-midfielder .score-value,
+.position-midfielder .mini-stat-value,
+.position-midfielder .rank-badge {
+  color: var(--midfielder-color);
+  border-color: rgba(220, 39, 61, 0.3);
+}
+
+.position-midfielder .mini-stat-fill {
+  background: linear-gradient(to top, var(--midfielder-color), rgba(220, 39, 61, 0.7));
+}
+
+.position-midfielder .horizontal-player-card:hover {
+  border-color: rgba(220, 39, 61, 0.3);
+}
+
+.position-midfielder .horizontal-light-sweep {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(220, 39, 61, 0.05),
+    transparent
+  );
+}
+
+.position-midfielder .bench-score {
+  color: var(--midfielder-color);
+}
+
+.position-midfielder .radar-chart-small path {
+  fill: rgba(220, 39, 61, 0.2);
+  stroke: var(--midfielder-color);
+}
+
+.position-midfielder .radar-point {
+  fill: var(--midfielder-color);
+}
+
+/* Defender Theme */
+.analysis-defender {
+  --position-color: var(--defender-color);
+}
+
+.position-defender .position-title {
+  color: var(--defender-color);
+}
+
+.position-defender .slider-value,
+.position-defender .slider-fill,
+.position-defender .slider-thumb {
+  color: var(--defender-color);
+  background-color: var(--defender-color);
+  border-color: var(--defender-color);
+}
+
+.position-defender .score-value,
+.position-defender .mini-stat-value,
+.position-defender .rank-badge {
+  color: var(--defender-color);
+  border-color: rgba(175, 161, 95, 0.3);
+}
+
+.position-defender .mini-stat-fill {
+  background: linear-gradient(to top, var(--defender-color), rgba(175, 161, 95, 0.7));
+}
+
+.position-defender .horizontal-player-card:hover {
+  border-color: rgba(175, 161, 95, 0.3);
+}
+
+.position-defender .horizontal-light-sweep {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(175, 161, 95, 0.05),
+    transparent
+  );
+}
+
+.position-defender .bench-score {
+  color: var(--defender-color);
+}
+
+.position-defender .radar-chart-small path {
+  fill: rgba(175, 161, 95, 0.2);
+  stroke: var(--defender-color);
+}
+
+.position-defender .radar-point {
+  fill: var(--defender-color);
+}
+
+/* Goalkeeper Theme */
+.analysis-goalkeeper {
+  --position-color: var(--goalkeeper-color);
+}
+
+.position-goalkeeper .position-title {
+  color: var(--goalkeeper-color);
+}
+
+.position-goalkeeper .slider-value,
+.position-goalkeeper .slider-fill,
+.position-goalkeeper .slider-thumb {
+  color: var(--goalkeeper-color);
+  background-color: var(--goalkeeper-color);
+  border-color: var(--goalkeeper-color);
+}
+
+.position-goalkeeper .score-value,
+.position-goalkeeper .mini-stat-value,
+.position-goalkeeper .rank-badge {
+  color: var(--goalkeeper-color);
+  border-color: rgba(190, 47, 122, 0.3);
+}
+
+.position-goalkeeper .mini-stat-fill {
+  background: linear-gradient(to top, var(--goalkeeper-color), rgba(190, 47, 122, 0.7));
+}
+
+.position-goalkeeper .horizontal-player-card:hover {
+  border-color: rgba(190, 47, 122, 0.3);
+}
+
+.position-goalkeeper .horizontal-light-sweep {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(190, 47, 122, 0.05),
+    transparent
+  );
+}
+
+.position-goalkeeper .bench-score {
+  color: var(--goalkeeper-color);
+}
+
+.position-goalkeeper .radar-chart-small path {
+  fill: rgba(190, 47, 122, 0.2);
+  stroke: var(--goalkeeper-color);
+}
+
+.position-goalkeeper .radar-point {
+  fill: var(--goalkeeper-color);
+}
+
+/* PCA Colors by position */
+.position-midfielder .pca-point.highlighted {
+  background: var(--midfielder-color);
+  box-shadow: 0 0 20px rgba(220, 39, 61, 0.6);
+}
+
+.position-defender .pca-point.highlighted {
+  background: var(--defender-color);
+  box-shadow: 0 0 20px rgba(175, 161, 95, 0.6);
+}
+
+.position-goalkeeper .pca-point.highlighted {
+  background: var(--goalkeeper-color);
+  box-shadow: 0 0 20px rgba(190, 47, 122, 0.6);
+}
+
+/* Button hovers */
+.position-midfielder .pca-button:hover,
+.position-midfielder .algorithm-selector:hover {
+  border-color: rgba(220, 39, 61, 0.3);
+}
+
+.position-defender .pca-button:hover,
+.position-defender .algorithm-selector:hover {
+  border-color: rgba(175, 161, 95, 0.3);
+}
+
+.position-goalkeeper .pca-button:hover,
+.position-goalkeeper .algorithm-selector:hover {
+  border-color: rgba(190, 47, 122, 0.3);
+}
+
+/* Photo borders */
+.position-midfielder .player-photo-small:hover {
+  border-color: rgba(220, 39, 61, 0.3);
+}
+
+.position-defender .player-photo-small:hover {
+  border-color: rgba(175, 161, 95, 0.3);
+}
+
+.position-goalkeeper .player-photo-small:hover {
+  border-color: rgba(190, 47, 122, 0.3);
+}
+
+/* Bench cards */
+.position-midfielder .bench-player-card:hover {
+  border-color: rgba(220, 39, 61, 0.2);
+}
+
+.position-defender .bench-player-card:hover {
+  border-color: rgba(175, 161, 95, 0.2);
+}
+
+.position-goalkeeper .bench-player-card:hover {
+  border-color: rgba(190, 47, 122, 0.2);
+}

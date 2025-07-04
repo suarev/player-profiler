@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import './styles/animations.css'
 import './styles/positions.css'
+import './styles/position-themes.css'
 
 export const metadata: Metadata = {
   title: 'LENS - Bring Players Into Focus',

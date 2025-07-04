@@ -18,10 +18,17 @@ interface PositionProps {
 export default function PositionColumn({ position, index }: PositionProps) {
   const router = useRouter()
 
-  const handleClick = () => {
-    // Navigate to the analysis page for this position
-    router.push(`/analysis/${position.name.toLowerCase()}`)
+const handleClick = () => {
+  // Navigate to the analysis page for this position
+  const routeMap: Record<string, string> = {
+    'FORWARDS': '/analysis/forwards',
+    'MIDFIELDERS': '/analysis/midfielders',
+    'DEFENDERS': '/analysis/defenders',
+    'GOALKEEPERS': '/analysis/goalkeepers'
   }
+  
+  router.push(routeMap[position.name] || `/analysis/${position.name.toLowerCase()}`)
+}
 
   return (
     <div 

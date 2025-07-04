@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { PlayerRecommendation } from '@/app/types/analysis'
 import HorizontalPlayerCard from './HorizontalPlayerCard'
-import { analysisApi } from '@/app/services/analysisApi'
+import { genericAnalysisApi } from '@/app/services/genericAnalysisApi'
 
 interface RecommendationsPanelProps {
   recommendations: PlayerRecommendation[]
@@ -17,21 +17,7 @@ export default function RecommendationsPanel({
   variant = 'primary' 
 }: RecommendationsPanelProps) {
   const [expandedIndex, setExpandedIndex] = useState<number>(0) // Default to first card
-  const [algorithms, setAlgorithms] = useState<Algorithm[]>([])
   const lastHoveredRef = useRef<number>(0) // Track last hovered
-
-  useEffect(() => {
-    loadAlgorithms()
-  }, [])
-
-  const loadAlgorithms = async () => {
-    try {
-      const data = await analysisApi.getAlgorithms()
-      setAlgorithms(data)
-    } catch (error) {
-      console.error('Failed to load algorithms:', error)
-    }
-  }
   
   // Show skeleton while loading
   if (loading && variant === 'primary') {

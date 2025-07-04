@@ -314,7 +314,7 @@ React.useEffect(() => {
             <path
               d={radarPath}
               fill="rgba(255, 107, 107, 0.2)"
-              stroke="#ff6b6b"
+              stroke="var(--position-color)"
               strokeWidth="2"
             />
 
@@ -325,7 +325,7 @@ React.useEffect(() => {
                   cx={point.x}
                   cy={point.y}
                   r="4"
-                  fill="#ff6b6b"
+                  fill="var(--position-color)"
                   className="radar-point"
                   style={{ cursor: 'pointer' }}
                 />

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 
+
 # Import routers after creating app
 app = FastAPI(
     title="LENS Player Profiler API",
@@ -10,7 +11,7 @@ app = FastAPI(
 )
 
 # Import here to avoid circular imports
-from app.api import forwards, algorithms, stats
+from app.api import positions, algorithms, stats
 
 # Configure CORS
 app.add_middleware(
@@ -22,9 +23,9 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(forwards.router, prefix="/api/forwards", tags=["forwards"])
 app.include_router(algorithms.router, prefix="/api/algorithms", tags=["algorithms"])
 app.include_router(stats.router, prefix="/api/stats", tags=["stats"])
+app.include_router(positions.router, prefix="/api/positions", tags=["positions"])
 
 @app.get("/")
 async def root():

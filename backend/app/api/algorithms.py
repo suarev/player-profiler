@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from typing import List
 from app.models.schemas import Algorithm
-from app.core.metrics import ALGORITHMS
+from app.core.algorithms import ALGORITHMS
 
 router = APIRouter()
 

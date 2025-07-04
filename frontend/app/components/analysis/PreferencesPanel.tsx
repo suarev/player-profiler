@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { ForwardMetrics, Algorithm } from '@/app/types/analysis'
 import MetricSlider from './MetricSlider'
 import AlgorithmSelector from './AlgorithmSelector'
-import { analysisApi } from '@/app/services/analysisApi'
+import { genericAnalysisApi } from '@/app/services/genericAnalysisApi'
 
 interface PreferencesPanelProps {
   metrics: ForwardMetrics[]
@@ -29,7 +29,7 @@ export default function PreferencesPanel({
 
   const loadAlgorithms = async () => {
     try {
-      const data = await analysisApi.getAlgorithms()
+      const data = await genericAnalysisApi.getAlgorithms()
       setAlgorithms(data)
     } catch (error) {
       console.error('Failed to load algorithms:', error)
