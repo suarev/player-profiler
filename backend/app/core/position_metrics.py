@@ -295,7 +295,6 @@ GOALKEEPER_METRICS = {
         }
     }
 }
-
 # Export all metrics by position
 POSITION_METRICS = {
     "forward": {

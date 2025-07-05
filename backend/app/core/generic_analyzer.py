@@ -24,40 +24,76 @@ class GenericPlayerAnalyzer:
             
             position_group = position_mapping.get(self.position)
             
-            # Build position-specific query
-            base_query = f"""
-            SELECT 
-                p.id as player_id,
-                p.name,
-                p.team,
-                p.position,
-                p.age,
-                pp.percentiles
-            """
-            
-            # Add position-specific stats
+            # Build position-specific query WITH RAW STATS
             if self.position == "goalkeeper":
-                query = base_query + """
-                    ,k.performance_saves
-                    ,k.performance_savepct
-                    ,k.performance_cs
-                    ,k.performance_ga
+                query = f"""
+                SELECT 
+                    p.id as player_id,
+                    p.name,
+                    p.team,
+                    p.position,
+                    p.age,
+                    pp.percentiles,
+                    -- Raw keeper stats for display
+                    k.performance_saves,
+                    k.performance_savepct,
+                    k.performance_cs,
+                    k.performance_ga,
+                    k.performance_ga90,
+                    k.performance_sota,
+                    -- Use the correct column name for keepers
+                    CAST(k.playing_time_min AS FLOAT) / 90 as playing_time_90s
                 FROM football_data.players p
                 JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
                 LEFT JOIN football_data.player_keeper_stats k ON p.name = k.player
                 WHERE pp.position_group = 'goalkeeper'
                 """
             else:
-                query = base_query + """
-                    ,s.performance_gls
-                    ,s.performance_ast
-                    ,s.expected_xg
-                    ,s.playing_time_90s
+                # For all other positions, get comprehensive stats
+                query = f"""
+                SELECT 
+                    p.id as player_id,
+                    p.name,
+                    p.team,
+                    p.position,
+                    p.age,
+                    pp.percentiles,
+                    -- Standard stats
+                    s.performance_gls,
+                    s.performance_ast,
+                    s.expected_xg,
+                    s.expected_xag,
+                    s.playing_time_90s,
+                    -- Shooting stats
+                    sh.standard_sh,
+                    sh.standard_sot,
+                    -- Passing stats
+                    ps.total_cmp,
+                    ps.total_att,
+                    ps.total_cmppct,
+                    ps.kp,
+                    ps.prgp,
+                    -- Possession stats
+                    pos.carries_prgc,
+                    pos.touches_touches,
+                    -- Defense stats
+                    d.tackles_tklw,
+                    d.int,
+                    d.blocks_blocks,
+                    -- Misc stats
+                    m.aerial_duels_won,
+                    m.aerial_duels_wonpct,
+                    m.performance_recov
                 FROM football_data.players p
                 JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
                 LEFT JOIN football_data.player_standard_stats s ON p.name = s.player
-                WHERE pp.position_group = %s
-                """ % f"'{position_group}'"
+                LEFT JOIN football_data.player_shooting_stats sh ON p.name = sh.player
+                LEFT JOIN football_data.player_passing_stats ps ON p.name = ps.player
+                LEFT JOIN football_data.player_possession_stats pos ON p.name = pos.player
+                LEFT JOIN football_data.player_defense_stats d ON p.name = d.player
+                LEFT JOIN football_data.player_misc_stats m ON p.name = m.player
+                WHERE pp.position_group = '{position_group}'
+                """
             
             self.df = execute_query(query)
             
@@ -143,6 +179,7 @@ class GenericPlayerAnalyzer:
                 
                 player_name = player['name']
                 player_team = player.get('team', 'Unknown')
+                player_age = player.get('age', None)  # Get actual age
                 
                 # Get player image
                 player_image = None
@@ -154,10 +191,10 @@ class GenericPlayerAnalyzer:
                     print(f"Error getting image for {player_name}: {e}")
                     player_image = player_image_service.get_fallback_image(player_name)
                 
-                # Get position-specific key stats
+                # Get position-specific key stats with ACTUAL VALUES
                 key_stats = self._get_key_stats(player_data)
                 
-                # Get percentile ranks
+                # Get percentile ranks for the sliders
                 percentiles = {}
                 for metric_id in weights.keys():
                     if metric_id in self.metrics:
@@ -183,6 +220,7 @@ class GenericPlayerAnalyzer:
                     "name": player_name,
                     "team": player_team,
                     "position": player.get('position', self.position.upper()[:2]),
+                    "age": int(player_age) if player_age and pd.notna(player_age) else None,
                     "match_score": float(player.get('final_score', 0)),
                     "key_stats": key_stats,
                     "percentile_ranks": percentiles,
@@ -193,37 +231,62 @@ class GenericPlayerAnalyzer:
             
         except Exception as e:
             print(f"Error in get_recommendations for {self.position}: {e}")
+            import traceback
+            traceback.print_exc()
             return []
     
     def _get_key_stats(self, player_data) -> Dict[str, float]:
-        """Get position-specific key stats"""
+        """Get position-specific key stats with ACTUAL VALUES, not percentiles"""
+        def safe_float(value, default=0.0):
+            """Safely convert to float, handling None and NaN"""
+            if pd.isna(value) or value is None:
+                return default
+            try:
+                return float(value)
+            except:
+                return default
+        
         if self.position == "forward":
             return {
-                "goals": float(player_data.get('performance_gls', 0)) if pd.notna(player_data.get('performance_gls')) else 0.0,
-                "xG": float(player_data.get('expected_xg', 0)) if pd.notna(player_data.get('expected_xg')) else 0.0,
-                "shots": float(player_data.get('standard_sh', 0)) if pd.notna(player_data.get('standard_sh')) else 0.0,
-                "assists": float(player_data.get('performance_ast', 0)) if pd.notna(player_data.get('performance_ast')) else 0.0
+                "goals": safe_float(player_data.get('performance_gls', 0)),
+                "xG": safe_float(player_data.get('expected_xg', 0)),
+                "shots": safe_float(player_data.get('standard_sh', 0)),
+                "assists": safe_float(player_data.get('performance_ast', 0))
             }
         elif self.position == "midfielder":
+            # Calculate pass completion % if we have the data
+            passes_completed = safe_float(player_data.get('total_cmp', 0))
+            passes_attempted = safe_float(player_data.get('total_att', 1))  # Avoid division by zero
+            pass_pct = safe_float(player_data.get('total_cmppct', 0))
+            
+            # Use calculated or stored percentage
+            if pass_pct == 0 and passes_attempted > 0:
+                pass_pct = (passes_completed / passes_attempted) * 100
+            
             return {
-                "passes": float(player_data.get('total_cmp_pct', 50)) if pd.notna(player_data.get('total_cmp_pct')) else 50.0,
-                "key_passes": float(player_data.get('kp_pct', 50)) if pd.notna(player_data.get('kp_pct')) else 50.0,
-                "prog_carries": float(player_data.get('carries_prgc_pct', 50)) if pd.notna(player_data.get('carries_prgc_pct')) else 50.0,
-                "tackles": float(player_data.get('tackles_tklw_pct', 50)) if pd.notna(player_data.get('tackles_tklw_pct')) else 50.0
+                "passes": pass_pct,
+                "key_passes": safe_float(player_data.get('kp', 0)),
+                "prog_carries": safe_float(player_data.get('carries_prgc', 0)),
+                "tackles": safe_float(player_data.get('tackles_tklw', 0))
             }
         elif self.position == "defender":
             return {
-                "tackles": float(player_data.get('tackles_tklw_pct', 50)) if pd.notna(player_data.get('tackles_tklw_pct')) else 50.0,
-                "interceptions": float(player_data.get('int_pct', 50)) if pd.notna(player_data.get('int_pct')) else 50.0,
-                "aerial_won": float(player_data.get('aerial_duels_wonpct_pct', 50)) if pd.notna(player_data.get('aerial_duels_wonpct_pct')) else 50.0,
-                "prog_passes": float(player_data.get('prgp_pct', 50)) if pd.notna(player_data.get('prgp_pct')) else 50.0
+                "tackles": safe_float(player_data.get('tackles_tklw', 0)),
+                "interceptions": safe_float(player_data.get('int', 0)),
+                "aerial_won": safe_float(player_data.get('aerial_duels_wonpct', 0)),
+                "prog_passes": safe_float(player_data.get('prgp', 0))
             }
         elif self.position == "goalkeeper":
+            # Convert save percentage to proper format if needed
+            save_pct = safe_float(player_data.get('performance_savepct', 0))
+            if save_pct > 0 and save_pct < 1:  # If it's stored as decimal
+                save_pct = save_pct * 100
+            
             return {
-                "save_pct": float(player_data.get('performance_savepct', 0)) if pd.notna(player_data.get('performance_savepct')) else 0.0,
-                "saves": float(player_data.get('performance_saves', 0)) if pd.notna(player_data.get('performance_saves')) else 0.0,
-                "clean_sheets": float(player_data.get('performance_cs', 0)) if pd.notna(player_data.get('performance_cs')) else 0.0,
-                "goals_against": float(player_data.get('performance_ga', 0)) if pd.notna(player_data.get('performance_ga')) else 0.0
+                "save_pct": save_pct,
+                "saves": safe_float(player_data.get('performance_saves', 0)),
+                "clean_sheets": safe_float(player_data.get('performance_cs', 0)),
+                "goals_against": safe_float(player_data.get('performance_ga', 0))
             }
         else:
             return {}

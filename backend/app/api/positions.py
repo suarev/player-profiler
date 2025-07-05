@@ -121,13 +121,13 @@ async def get_pca_data(position: str, k: Optional[int] = None):
                     p.team,
                     p.position,
                     pp.percentiles,
-                    k.playing_time_90s
+                    CAST(k.playing_time_min AS FLOAT) / 90 as playing_time_90s
                 FROM football_data.players p
                 JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
                 LEFT JOIN football_data.player_keeper_stats k ON p.name = k.player
                 WHERE pp.position_group = 'goalkeeper'
                 AND pp.percentiles IS NOT NULL
-                AND CAST(k.playing_time_90s AS FLOAT) >= 10
+                AND CAST(k.playing_time_min AS FLOAT) >= 900  -- 10 games worth of minutes
             """
         
         df = execute_query(query)

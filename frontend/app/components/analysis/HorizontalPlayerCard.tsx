@@ -299,7 +299,7 @@ export default function HorizontalPlayerCard({
             <div className="detail-items">
               <div className="detail-item">
                 <span className="detail-label">AGE</span>
-                <span className="detail-value">{player.age || 'N/A'}</span>
+                <span className="detail-value">{player.age ? player.age : '-'}</span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">NAT</span>
