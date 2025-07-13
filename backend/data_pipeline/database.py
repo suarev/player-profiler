@@ -1,6 +1,7 @@
 import psycopg2
 from psycopg2 import sql
 import pandas as pd
+from data_pipeline.config import DATABASE_CONFIG, DATABASE_URL, FBREF_STAT_TYPES, LEAGUES, SEASONS
 
 class DatabaseManager:
     def __init__(self):
