@@ -8,6 +8,8 @@ import {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
+// This will use your Railway backend URL in production
+
 export const genericAnalysisApi = {
   // Get available metrics for a position
   async getPositionMetrics(position: string): Promise<ForwardMetrics[]> {
