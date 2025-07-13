@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 import re
 from data_pipeline.database import DatabaseManager
-from data_pipeline.config import FBREF_STAT_TYPES, LEAGUES, SEASONS
+from data_pipeline.config import DATABASE_CONFIG, DATABASE_URL, FBREF_STAT_TYPES, LEAGUES, SEASONS
 
 class PlayerDataScraper:
     def __init__(self):
