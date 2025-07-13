@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 import os
 import re
-from database import DatabaseManager
+from data_pipeline.database import DatabaseManager
 from data_pipeline.config import FBREF_STAT_TYPES, LEAGUES, SEASONS
 
 class PlayerDataScraper:
