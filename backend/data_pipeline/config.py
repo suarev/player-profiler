@@ -27,3 +27,22 @@ else:
         'password': os.getenv('PGPASSWORD', os.getenv('DB_PASSWORD', '')),
         'database': os.getenv('PGDATABASE', os.getenv('DB_NAME', 'railway'))
     }
+    
+# FBref stat types (from documentation)
+FBREF_STAT_TYPES = [
+    'standard',
+    'keeper',
+    'keeper_adv',
+    'shooting', 
+    'passing',
+    'passing_types',
+    'goal_shot_creation',
+    'defense',
+    'possession',
+    'playing_time',
+    'misc'
+]
+
+# Leagues and seasons to scrape
+LEAGUES = ["Big 5 European Leagues Combined"]
+SEASONS = ["2024-2025"]  # Current season
