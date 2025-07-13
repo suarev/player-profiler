@@ -1,7 +1,7 @@
 import psycopg2
 from psycopg2 import sql
 import pandas as pd
-from config import DATABASE_CONFIG
+from data_pipeline.database import DatabaseManager
 
 class DatabaseManager:
     def __init__(self):
