@@ -94,32 +94,60 @@ class GenericPlayerAnalyzer:
             
             # ADD DEBUGGING
             print(f"Loaded {len(self.df)} {self.position}s")
-            print(f"Columns: {list(self.df.columns)[:10]}...")  # Show first 10 columns
+            print(f"Columns: {list(self.df.columns)[:10]}...")
             
-            # Expand percentiles
+            # FIXED percentiles expansion
             if not self.df.empty and 'percentiles' in self.df.columns:
                 import json
                 
-                percentile_data = {}
-                for idx, row in self.df.iterrows():
-                    percentiles = json.loads(row['percentiles']) if isinstance(row['percentiles'], str) else row['percentiles']
-                    for key, value in percentiles.items():
-                        col_name = f"{key}_pct"
-                        if col_name not in percentile_data:
-                            percentile_data[col_name] = {}
-                        percentile_data[col_name][idx] = value
+                # Create a list to store valid percentile data
+                valid_percentile_rows = []
+                valid_df_indices = []
                 
-                if percentile_data:
-                    percentile_df = pd.DataFrame.from_dict(percentile_data)
-                    percentile_df.index = self.df.index
-                    self.df = pd.concat([self.df, percentile_df], axis=1)
+                for idx, row in self.df.iterrows():
+                    try:
+                        percentiles = json.loads(row['percentiles']) if isinstance(row['percentiles'], str) else row['percentiles']
+                        if percentiles and isinstance(percentiles, dict):
+                            valid_percentile_rows.append(percentiles)
+                            valid_df_indices.append(idx)
+                    except:
+                        # Skip rows with invalid percentiles
+                        continue
+                
+                if valid_percentile_rows:
+                    # Filter the main DataFrame to only include rows with valid percentiles
+                    self.df = self.df.loc[valid_df_indices].reset_index(drop=True)
+                    
+                    # Now create percentile DataFrame with matching length
+                    percentile_data = {}
+                    for i, percentiles in enumerate(valid_percentile_rows):
+                        for key, value in percentiles.items():
+                            col_name = f"{key}_pct"
+                            if col_name not in percentile_data:
+                                percentile_data[col_name] = {}
+                            percentile_data[col_name][i] = value
+                    
+                    if percentile_data:
+                        percentile_df = pd.DataFrame.from_dict(percentile_data)
+                        percentile_df.index = self.df.index  # Use same index
+                        
+                        # Concatenate with matching indices
+                        self.df = pd.concat([self.df, percentile_df], axis=1)
+                        print(f"✅ Added percentiles for {len(self.df)} players")
+                    else:
+                        print("⚠️ No valid percentile data found")
+                else:
+                    print("⚠️ No valid percentile rows found")
             
-            print(f"Loaded {len(self.df)} {self.position}s with precomputed percentiles")
+            print(f"Final DataFrame shape: {self.df.shape}")
+            print(f"Final columns check: {list(self.df.columns)[:10]}...")
             
         except Exception as e:
             print(f"Error loading {self.position} data: {e}")
-            self.df = pd.DataFrame()  # Empty fallback
-
+            import traceback
+            traceback.print_exc()
+            self.df = pd.DataFrame()
+    
     def calculate_metric_scores(self, metric_weights: Dict[str, float]) -> pd.DataFrame:
         """Calculate composite scores for each metric based on user preferences"""
         scores_df = self.df[['player_id', 'name', 'team', 'position', 'age']].copy()
