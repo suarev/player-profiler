@@ -43,5 +43,6 @@ else:
 print("\n📈 Computing percentiles...")
 import subprocess
 subprocess.run([sys.executable, "scripts/precompute_percentiles_optimized.py"])
+subprocess.run([sys.executable, "scripts/recompute_goalkeeper_percentiles.py"])
 
 print("\n✅ Setup complete!")
