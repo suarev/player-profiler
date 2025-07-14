@@ -1,25 +1,36 @@
 import os
 import sys
+import subprocess
+import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# First create schema
 import psycopg2
+from sqlalchemy import create_engine, inspect, text
+import pandas as pd
 
-# Use DATABASE_URL, not DATABASE_PUBLIC_URL when running from Railway
-db_url = os.getenv('DATABASE_PUBLIC_URL')
+# =========================
+# 🔌 Step 1: Connect to DB
+# =========================
+db_url = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL")
 if not db_url:
-    print("❌ No DATABASE_URL found! Make sure you're linked to the backend service.")
+    print("❌ No database URL found! Set DATABASE_PUBLIC_URL or DATABASE_URL.")
     sys.exit(1)
 
-print(f"Connecting to database...")
+print("Connecting to database...")
 conn = psycopg2.connect(db_url)
 cur = conn.cursor()
 print("CONNECTED")
-cur.execute('CREATE SCHEMA IF NOT EXISTS football_data')
+
+# ================================
+# 🏗️ Step 2: Create Schema
+# ================================
+cur.execute("CREATE SCHEMA IF NOT EXISTS football_data")
 conn.commit()
 print("✅ Schema created")
 
-# Check if tables exist
+# ================================
+# 📊 Step 3: Check Existing Tables
+# ================================
 cur.execute("""
     SELECT COUNT(*) 
     FROM information_schema.tables 
@@ -27,10 +38,11 @@ cur.execute("""
 """)
 table_count = cur.fetchone()[0]
 print(f"📊 Found {table_count} existing tables")
-
 conn.close()
 
-# Now run scraper
+# ================================
+# 🕸️ Step 4: Scrape Player Data
+# ================================
 if table_count == 0:
     print("\n🚀 Starting data scrape...")
     from data_pipeline.scraper import PlayerDataScraper
@@ -39,10 +51,38 @@ if table_count == 0:
 else:
     print("ℹ️  Tables already exist, skipping scraper")
 
-# Run percentiles
+# ======================================
+# 📈 Step 5: Compute General Percentiles
+# ======================================
 print("\n📈 Computing percentiles...")
-import subprocess
 subprocess.run([sys.executable, "scripts/precompute_percentiles_optimized.py"])
-subprocess.run([sys.executable, "scripts/recompute_goalkeeper_percentiles.py"])
+
+# ===========================================
+# 🧠 Step 6: If table exists, run GK script
+# ===========================================
+print("\n🧠 Checking if goalkeeper recompute is needed...")
+
+engine = create_engine(db_url)
+
+with engine.begin() as conn:
+    inspector = inspect(conn)
+    has_gk_table = inspector.has_table("player_percentiles_all", schema="football_data")
+
+if has_gk_table:
+    print("✅ player_percentiles_all found. Running goalkeeper recompute...")
+    subprocess.run([sys.executable, "scripts/recompute_goalkeeper_percentiles.py"])
+else:
+    print("⚠️ Skipping goalkeeper recompute: player_percentiles_all table not found")
+
+# ===========================================
+# 🔍 Step 7: Final row count check
+# ===========================================
+print("\n🔍 Verifying data presence in players table...")
+with engine.begin() as conn:
+    try:
+        result = conn.execute(text("SELECT COUNT(*) FROM football_data.players"))
+        print(f"✅ Total players in DB: {result.scalar()}")
+    except Exception as e:
+        print(f"❌ Could not check players table: {e}")
 
 print("\n✅ Setup complete!")
