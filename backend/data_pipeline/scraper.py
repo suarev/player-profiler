@@ -14,7 +14,7 @@ class PlayerDataScraper:
         self.fbref = sd.FBref(leagues=LEAGUES, seasons=SEASONS)
         
     def scrape_and_store_all(self):
-        """Main function to scrape all data"""
+        """Main function to scrape all data with better error handling"""
         print("🚀 Starting Player Data Scraper...")
         
         # Connect to database
@@ -24,33 +24,48 @@ class PlayerDataScraper:
             # First, create players table if not exists
             self._create_players_table()
             
-            # Scrape each stat type from FBref
+            # Scrape each stat type with individual error handling
             all_players = set()
             for stat_type in FBREF_STAT_TYPES:
                 print(f"\n📊 Scraping {stat_type} stats...")
                 
-                # Create a new connection for each stat type to avoid transaction issues
-                self.db.close()
-                self.db.connect()
-                
-                players = self._scrape_stat_type(stat_type)
-                if players is not None:
-                    all_players.update(players)
-                
-            # Scrape Transfermarkt data
-            print("\n💰 Scraping Transfermarkt data...")
+                try:
+                    # Create a fresh connection for each stat type
+                    self.db.close()
+                    self.db.connect()
+                    
+                    players = self._scrape_stat_type(stat_type)
+                    if players is not None:
+                        all_players.update(players)
+                        print(f"✅ {stat_type} completed successfully")
+                    else:
+                        print(f"⚠️ {stat_type} failed but continuing...")
+                        
+                except Exception as e:
+                    print(f"❌ Error with {stat_type}: {e}")
+                    print("🔄 Continuing with next stat type...")
+                    continue
+            
+            print(f"\n✅ Scraping completed! Total unique players: {len(all_players)}")
+            
+            # Show final table count
             self.db.close()
             self.db.connect()
-            self._scrape_transfermarkt()
-            
-            print(f"\n✅ All scraping completed! Total unique players: {len(all_players)}")
+            cursor = self.db.connection.cursor()
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM information_schema.tables 
+                WHERE table_schema = 'football_data'
+            """)
+            table_count = cursor.fetchone()[0]
+            print(f"📊 Final table count: {table_count}")
             
         except Exception as e:
-            print(f"\n❌ Fatal error during scraping: {e}")
+            print(f"\n❌ Fatal error: {e}")
             self.db.connection.rollback()
         finally:
             self.db.close()
-    
+
     def _clean_column_name(self, col):
         """Clean column name for PostgreSQL compatibility"""
         # Replace special characters
