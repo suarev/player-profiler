@@ -24,8 +24,8 @@ class GenericPlayerAnalyzer:
             
             position_group = position_mapping.get(self.position)
             
-            # Build position-specific query WITH RAW STATS
             if self.position == "goalkeeper":
+                # Goalkeeper query stays the same
                 query = f"""
                 SELECT 
                     p.id as player_id,
@@ -34,14 +34,12 @@ class GenericPlayerAnalyzer:
                     p.position,
                     p.age,
                     pp.percentiles,
-                    -- Raw keeper stats for display
                     k.performance_saves,
                     k.performance_savepct,
                     k.performance_cs,
                     k.performance_ga,
                     k.performance_ga90,
                     k.performance_sota,
-                    -- Use the correct column name for keepers
                     CAST(k.playing_time_min AS FLOAT) / 90 as playing_time_90s
                 FROM football_data.players p
                 JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
@@ -49,7 +47,7 @@ class GenericPlayerAnalyzer:
                 WHERE pp.position_group = 'goalkeeper'
                 """
             else:
-                # For all other positions, get comprehensive stats
+                # FIXED query for other positions - include all required columns
                 query = f"""
                 SELECT 
                     p.id as player_id,
@@ -58,29 +56,25 @@ class GenericPlayerAnalyzer:
                     p.position,
                     p.age,
                     pp.percentiles,
-                    -- Standard stats
                     s.performance_gls,
                     s.performance_ast,
                     s.expected_xg,
                     s.expected_xag,
                     s.playing_time_90s,
-                    -- Shooting stats
                     sh.standard_sh,
                     sh.standard_sot,
-                    -- Passing stats
                     ps.total_cmp,
                     ps.total_att,
                     ps.total_cmppct,
                     ps.kp,
                     ps.prgp,
-                    -- Possession stats
-                    pos.carries_prgc,
-                    pos.touches_touches,
-                    -- Defense stats
+                    gsc.sca_sca,
+                    gsc.gca_gca,
                     d.tackles_tklw,
                     d.int,
                     d.blocks_blocks,
-                    -- Misc stats
+                    pos.carries_prgc,
+                    pos.touches_touches,
                     m.aerial_duels_won,
                     m.aerial_duels_wonpct,
                     m.performance_recov
@@ -89,13 +83,18 @@ class GenericPlayerAnalyzer:
                 LEFT JOIN football_data.player_standard_stats s ON p.name = s.player
                 LEFT JOIN football_data.player_shooting_stats sh ON p.name = sh.player
                 LEFT JOIN football_data.player_passing_stats ps ON p.name = ps.player
-                LEFT JOIN football_data.player_possession_stats pos ON p.name = pos.player
+                LEFT JOIN football_data.player_goal_shot_creation_stats gsc ON p.name = gsc.player
                 LEFT JOIN football_data.player_defense_stats d ON p.name = d.player
+                LEFT JOIN football_data.player_possession_stats pos ON p.name = pos.player
                 LEFT JOIN football_data.player_misc_stats m ON p.name = m.player
                 WHERE pp.position_group = '{position_group}'
                 """
             
             self.df = execute_query(query)
+            
+            # ADD DEBUGGING
+            print(f"Loaded {len(self.df)} {self.position}s")
+            print(f"Columns: {list(self.df.columns)[:10]}...")  # Show first 10 columns
             
             # Expand percentiles
             if not self.df.empty and 'percentiles' in self.df.columns:
