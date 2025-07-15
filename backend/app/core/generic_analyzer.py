@@ -17,49 +17,110 @@ class GenericPlayerAnalyzer:
         try:
             position_group = self.position
             
-            # Your existing query...
-            query = f"""
-            SELECT 
-                p.id as player_id,
-                p.name,
-                p.team,
-                p.position,
-                p.age,
-                pp.percentiles,
-                s.performance_mp,
-                s.performance_gls,
-                s.performance_ast,
-                s.expected_xg,
-                s.expected_xag,
-                sh.standard_gls_per_sh,
-                sh.standard_sh,
-                sh.standard_sot,
-                ps.total_cmp,
-                ps.total_att,
-                ps.total_cmppct,
-                ps.kp,
-                ps.prgp,
-                gsc.sca_sca,
-                gsc.gca_gca,
-                d.tackles_tklw,
-                d.int,
-                d.blocks_blocks,
-                pos.carries_prgc,
-                pos.touches_touches,
-                m.aerial_duels_won,
-                m.aerial_duels_wonpct,
-                m.performance_recov
-            FROM football_data.players p
-            JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
-            LEFT JOIN football_data.player_standard_stats s ON p.name = s.player
-            LEFT JOIN football_data.player_shooting_stats sh ON p.name = sh.player
-            LEFT JOIN football_data.player_passing_stats ps ON p.name = ps.player
-            LEFT JOIN football_data.player_goal_shot_creation_stats gsc ON p.name = gsc.player
-            LEFT JOIN football_data.player_defense_stats d ON p.name = d.player
-            LEFT JOIN football_data.player_possession_stats pos ON p.name = pos.player
-            LEFT JOIN football_data.player_misc_stats m ON p.name = m.player
-            WHERE pp.position_group = '{position_group}'
-            """
+            if position_group == "goalkeeper":
+                # Goalkeeper specific query
+                query = f"""
+                SELECT 
+                    p.id as player_id,
+                    p.name,
+                    p.team,
+                    p.position,
+                    p.age,
+                    pp.percentiles,
+                    k.performance_saves,
+                    k.performance_savepct,
+                    k.performance_ga,
+                    k.performance_ga90,
+                    k.performance_cs,
+                    k.performance_cspct,
+                    k.playing_time_90s,
+                    ka.crosses_stp,
+                    ka.crosses_stppct,
+                    ka.sweeper_avgdist,
+                    ka.sweeper_numopa,
+                    ka.launched_cmppct,
+                    ka.passes_launchpct,
+                    ka.passes_avglen,
+                    ka.goal_kicks_avglen,
+                    k.penalty_kicks_pksv,
+                    k.penalty_kicks_savepct
+                FROM football_data.players p
+                JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
+                LEFT JOIN football_data.player_keeper_stats k ON p.name = k.player
+                LEFT JOIN football_data.player_keeper_adv_stats ka ON p.name = ka.player
+                WHERE pp.position_group = 'goalkeeper'
+                """
+            else:
+                # ALL other positions with ALL tables
+                query = f"""
+                SELECT 
+                    p.id as player_id,
+                    p.name,
+                    p.team,
+                    p.position,
+                    p.age,
+                    pp.percentiles,
+                    -- Standard stats
+                    s.performance_gls,
+                    s.performance_ast,
+                    s.expected_xg,
+                    s.expected_xag,
+                    s.playing_time_90s,
+                    s.performance_crdy,
+                    s.performance_crdr,
+                    -- Shooting
+                    sh.standard_sh,
+                    sh.standard_sot,
+                    -- Passing
+                    ps.total_cmp,
+                    ps.total_att,
+                    ps.total_cmppct,
+                    ps.kp,
+                    ps.prgp,
+                    ps.long_cmp,
+                    -- Creation
+                    gsc.sca_sca,
+                    gsc.gca_gca,
+                    -- Defense (WILL BE AVAILABLE!)
+                    d.tackles_tkl,
+                    d.tackles_tklw,
+                    d.tackles_def_3rd,
+                    d.tackles_att_3rd,
+                    d.int,
+                    d.blocks_blocks,
+                    d.blocks_pass,
+                    d.clr,
+                    d.err,
+                    -- Possession (WILL BE AVAILABLE!)
+                    pos.touches_touches,
+                    pos.touches_def_3rd,
+                    pos.touches_att_3rd,
+                    pos.touches_att_pen,
+                    pos.carries_prgc,
+                    pos.carries_cpa,
+                    pos.carries_1_per_3,
+                    pos.carries_mis,
+                    pos.take_ons_succ,
+                    pos.receiving_rec,
+                    -- Misc (WILL BE AVAILABLE!)
+                    m.performance_fls,
+                    m.performance_og,
+                    m.performance_recov,
+                    m.aerial_duels_won,
+                    m.aerial_duels_wonpct,
+                    m.aerial_duels_lost,
+                    m.challenges_lost
+                FROM football_data.players p
+                JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
+                LEFT JOIN football_data.player_standard_stats s ON p.name = s.player
+                LEFT JOIN football_data.player_shooting_stats sh ON p.name = sh.player
+                LEFT JOIN football_data.player_passing_stats ps ON p.name = ps.player
+                LEFT JOIN football_data.player_goal_shot_creation_stats gsc ON p.name = gsc.player
+                LEFT JOIN football_data.player_defense_stats d ON p.name = d.player
+                LEFT JOIN football_data.player_possession_stats pos ON p.name = pos.player
+                LEFT JOIN football_data.player_misc_stats m ON p.name = m.player
+                WHERE pp.position_group = '{position_group}'
+                """
             
             self.df = execute_query(query)
             
