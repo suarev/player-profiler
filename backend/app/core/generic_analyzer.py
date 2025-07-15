@@ -75,7 +75,7 @@ class GenericPlayerAnalyzer:
                 print(f"✅ Expanded percentiles - DataFrame shape: {self.df.shape}")
             
         except Exception as e:
-            print(f"❌ Error loading {self.position} data: {e}")
+            print(f"❌ Error:{self.position} data: {e}")
             import traceback
             traceback.print_exc()
             self.df = pd.DataFrame()
