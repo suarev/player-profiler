@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Use Railway's database URL if available
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv('DATABASE_PUBLIC_URL') or os.getenv('DATABASE_URL')
 
 if DATABASE_URL:
     # Parse DATABASE_URL to get components

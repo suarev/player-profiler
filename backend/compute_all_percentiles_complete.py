@@ -4,14 +4,15 @@ import numpy as np
 import json
 import os
 import psycopg2
-from sqlalchemy import create_engine
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def compute_all_percentiles():
     """Compute percentiles for ALL positions including goalkeepers"""
     
-    db_url = os.getenv('DATABASE_PUBLIC_URL')
+    db_url = os.getenv('DATABASE_PUBLIC_URL') or os.getenv('DATABASE_URL')
     conn = psycopg2.connect(db_url)
-    engine = create_engine(db_url.replace('postgres://', 'postgresql://'))
     
     print("🚀 Computing percentiles for ALL positions...")
     
@@ -193,46 +194,62 @@ def compute_all_percentiles():
     for position_group, query in queries.items():
         print(f"\n📊 Computing percentiles for {position_group}s...")
         
-        # Use pandas for efficient computation
-        df = pd.read_sql(query, engine)
-        
-        if len(df) == 0:
-            print(f"⚠️ No {position_group}s found!")
-            continue
+        try:
+            # Use pandas read_sql with psycopg2 connection
+            df = pd.read_sql(query, conn)
             
-        print(f"Found {len(df)} {position_group}s")
-        
-        # Get numeric columns (exclude id, name, position)
-        numeric_cols = [col for col in df.columns if col not in ['player_id', 'name', 'position']]
-        
-        # Calculate percentiles for each numeric column
-        percentiles = {}
-        for col in numeric_cols:
-            # Rank with proper handling of ties
-            df[f'{col}_pct'] = df[col].rank(pct=True, method='average') * 100
-            percentiles[col] = df[f'{col}_pct']
-        
-        # Insert into database
-        for idx, row in df.iterrows():
-            player_percentiles = {}
+            if len(df) == 0:
+                print(f"⚠️ No {position_group}s found!")
+                continue
+                
+            print(f"Found {len(df)} {position_group}s")
+            
+            # Get numeric columns (exclude id, name, position)
+            numeric_cols = [col for col in df.columns if col not in ['player_id', 'name', 'position']]
+            
+            # Calculate percentiles for each numeric column
+            percentiles = {}
             for col in numeric_cols:
-                pct_value = percentiles[col].iloc[idx]
-                if pd.notna(pct_value):
-                    player_percentiles[col] = round(pct_value, 2)
-                else:
-                    player_percentiles[col] = 50.0  # Default
+                # Rank with proper handling of ties
+                df[f'{col}_pct'] = df[col].rank(pct=True, method='average') * 100
+                percentiles[col] = df[f'{col}_pct']
             
-            cur.execute("""
-            INSERT INTO football_data.player_percentiles_all (player_id, position_group, percentiles)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (player_id) DO UPDATE
-            SET percentiles = EXCLUDED.percentiles,
-                position_group = EXCLUDED.position_group,
-                computed_at = CURRENT_TIMESTAMP
-            """, (int(row['player_id']), position_group, json.dumps(player_percentiles)))
-        
-        conn.commit()
-        print(f"✅ Inserted percentiles for {len(df)} {position_group}s")
+            # Insert into database in batches
+            batch_size = 100
+            inserted = 0
+            
+            for i in range(0, len(df), batch_size):
+                batch = df.iloc[i:i+batch_size]
+                
+                for idx, row in batch.iterrows():
+                    player_percentiles = {}
+                    for col in numeric_cols:
+                        pct_value = percentiles[col].iloc[idx]
+                        if pd.notna(pct_value):
+                            player_percentiles[col] = round(pct_value, 2)
+                        else:
+                            player_percentiles[col] = 50.0  # Default
+                    
+                    cur.execute("""
+                    INSERT INTO football_data.player_percentiles_all (player_id, position_group, percentiles)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (player_id) DO UPDATE
+                    SET percentiles = EXCLUDED.percentiles,
+                        position_group = EXCLUDED.position_group,
+                        computed_at = CURRENT_TIMESTAMP
+                    """, (int(row['player_id']), position_group, json.dumps(player_percentiles)))
+                
+                conn.commit()
+                inserted += len(batch)
+                print(f"  Processed {inserted}/{len(df)} {position_group}s...")
+            
+            print(f"✅ Completed {position_group}s - {len(df)} players processed")
+            
+        except Exception as e:
+            print(f"❌ Error processing {position_group}: {e}")
+            import traceback
+            traceback.print_exc()
+            continue
     
     conn.close()
     print("\n🎉 All percentiles computed successfully!")
