@@ -12,26 +12,91 @@ class GenericPlayerAnalyzer:
         self.metrics = POSITION_METRICS.get(position, {})
         self._load_data()
         
+# Update backend/app/core/generic_analyzer.py
+
     def _load_data(self):
         """Load all player data for the position with precomputed percentiles"""
         try:
             position_group = self.position
             
-            # Build query based on what tables exist
-            base_query = f"""
-            SELECT 
-                p.id as player_id,
-                p.name,
-                p.team,
-                p.position,
-                p.age,
-                pp.percentiles
-            FROM football_data.players p
-            JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
-            WHERE pp.position_group = '{position_group}'
-            """
+            # Build comprehensive query that includes BOTH percentiles AND raw stats
+            if position_group == "goalkeeper":
+                query = f"""
+                SELECT 
+                    p.id as player_id,
+                    p.name,
+                    p.team,
+                    p.position,
+                    p.age,
+                    pp.percentiles,
+                    -- Raw stats for key stats display
+                    k.performance_saves,
+                    k.performance_savepct,
+                    k.performance_cs,
+                    k.performance_cspct,
+                    k.performance_ga,
+                    k.performance_ga90,
+                    k.performance_sota,
+                    k.playing_time_90s,
+                    ka.crosses_stp,
+                    ka.crosses_stppct,
+                    ka.sweeper_avgdist,
+                    ka.sweeper_numopa,
+                    ka.sweeper_numopa_per_90,
+                    ka.launched_cmppct,
+                    ka.passes_launchpct,
+                    ka.passes_avglen,
+                    ka.goal_kicks_avglen,
+                    k.penalty_kicks_pksv,
+                    k.penalty_kicks_savepct
+                FROM football_data.players p
+                JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
+                LEFT JOIN football_data.player_keeper_stats k ON p.name = k.player
+                LEFT JOIN football_data.player_keeper_adv_stats ka ON p.name = ka.player
+                WHERE pp.position_group = 'goalkeeper'
+                """
+            else:
+                # For all other positions - INCLUDE RAW STATS!
+                query = f"""
+                SELECT 
+                    p.id as player_id,
+                    p.name,
+                    p.team,
+                    p.position,
+                    p.age,
+                    pp.percentiles,
+                    -- Standard stats (RAW VALUES for key stats)
+                    s.performance_gls,
+                    s.performance_ast,
+                    s.expected_xg,
+                    s.expected_xag,
+                    s.playing_time_90s,
+                    s.performance_crdy,
+                    s.performance_crdr,
+                    -- Shooting stats (RAW VALUES)
+                    sh.standard_sh,
+                    sh.standard_sot,
+                    sh.standard_dist,
+                    -- Passing stats (RAW VALUES)
+                    ps.total_cmp,
+                    ps.total_att,
+                    ps.total_cmppct,
+                    ps.kp,
+                    ps.prgp,
+                    ps.long_cmp,
+                    -- Goal/Shot Creation (RAW VALUES)
+                    gsc.sca_sca,
+                    gsc.gca_gca
+                FROM football_data.players p
+                JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
+                LEFT JOIN football_data.player_standard_stats s ON p.name = s.player
+                LEFT JOIN football_data.player_shooting_stats sh ON p.name = sh.player
+                LEFT JOIN football_data.player_passing_stats ps ON p.name = ps.player
+                LEFT JOIN football_data.player_goal_shot_creation_stats gsc ON p.name = gsc.player
+                WHERE pp.position_group = '{position_group}'
+                """
             
-            self.df = execute_query(base_query)
+            self.df = execute_query(query)
             
             if self.df.empty:
                 print(f"⚠️ No data found for {self.position}")
@@ -39,43 +104,53 @@ class GenericPlayerAnalyzer:
                 return
                 
             print(f"✅ Loaded {len(self.df)} {self.position}s")
+            print(f"Sample columns: {list(self.df.columns)[:15]}")
             
-            # Expand percentiles properly
+            # Expand percentiles JSON into columns
             if 'percentiles' in self.df.columns:
                 import json
                 
-                # Initialize a dictionary to store all percentile data
-                all_percentile_data = {f"{col}_pct": [] for col in self.get_all_metric_columns()}
-                
-                # Process each row
+                # Process each row to expand percentiles
                 for idx, row in self.df.iterrows():
                     try:
-                        percentiles = json.loads(row['percentiles']) if isinstance(row['percentiles'], str) else row['percentiles']
-                        
-                        # Fill in values for each expected column
-                        for col in self.get_all_metric_columns():
-                            pct_col = f"{col}_pct"
-                            if percentiles and col in percentiles:
-                                all_percentile_data[pct_col].append(percentiles[col])
-                            else:
-                                all_percentile_data[pct_col].append(50.0)  # Default value
-                                
+                        if pd.notna(row['percentiles']):
+                            percentiles = json.loads(row['percentiles']) if isinstance(row['percentiles'], str) else row['percentiles']
+                            
+                            # Add percentile columns to the DataFrame
+                            for key, value in percentiles.items():
+                                pct_col = f"{key}_pct"
+                                if value is not None:
+                                    self.df.at[idx, pct_col] = float(value)
+                                else:
+                                    self.df.at[idx, pct_col] = 50.0
                     except Exception as e:
-                        # If error, fill with defaults
-                        for col in self.get_all_metric_columns():
-                            all_percentile_data[f"{col}_pct"].append(50.0)
+                        print(f"⚠️ Error processing percentiles for row {idx}: {e}")
+                        continue
                 
-                # Create DataFrame from percentile data
-                percentile_df = pd.DataFrame(all_percentile_data)
-                
-                # Drop the percentiles column and concatenate
+                # Drop the original percentiles column
                 self.df = self.df.drop(columns=['percentiles'])
-                self.df = pd.concat([self.df, percentile_df], axis=1)
-                
-                print(f"✅ Expanded percentiles - DataFrame shape: {self.df.shape}")
+            
+            # Convert numeric columns to float
+            numeric_columns = ['performance_gls', 'performance_ast', 'expected_xg', 'expected_xag',
+                            'standard_sh', 'standard_sot', 'total_cmp', 'total_att', 'total_cmppct',
+                            'kp', 'prgp', 'sca_sca', 'gca_gca']
+            
+            for col in numeric_columns:
+                if col in self.df.columns:
+                    self.df[col] = pd.to_numeric(self.df[col], errors='coerce').fillna(0)
+            
+            print(f"✅ Data loaded and processed. Shape: {self.df.shape}")
+            
+            # Verify we have key columns
+            if not self.df.empty:
+                sample = self.df.iloc[0]
+                print(f"Sample player data check:")
+                print(f"  - Name: {sample.get('name', 'MISSING')}")
+                print(f"  - Goals: {sample.get('performance_gls', 'MISSING')}")
+                print(f"  - Goals_pct: {sample.get('performance_gls_pct', 'MISSING')}")
             
         except Exception as e:
-            print(f"❌ Error:{self.position} data: {e}")
+            print(f"❌ Error loading {self.position} data: {e}")
             import traceback
             traceback.print_exc()
             self.df = pd.DataFrame()
