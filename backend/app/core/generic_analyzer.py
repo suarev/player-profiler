@@ -17,186 +17,75 @@ class GenericPlayerAnalyzer:
         try:
             position_group = self.position
             
-            if position_group == "goalkeeper":
-                # Goalkeeper specific query
-                query = f"""
-                SELECT 
-                    p.id as player_id,
-                    p.name,
-                    p.team,
-                    p.position,
-                    p.age,
-                    pp.percentiles,
-                    k.performance_saves,
-                    k.performance_savepct,
-                    k.performance_ga,
-                    k.performance_ga90,
-                    k.performance_cs,
-                    k.performance_cspct,
-                    k.playing_time_90s,
-                    ka.crosses_stp,
-                    ka.crosses_stppct,
-                    ka.sweeper_avgdist,
-                    ka.sweeper_numopa,
-                    ka.launched_cmppct,
-                    ka.passes_launchpct,
-                    ka.passes_avglen,
-                    ka.goal_kicks_avglen,
-                    k.penalty_kicks_pksv,
-                    k.penalty_kicks_savepct
-                FROM football_data.players p
-                JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
-                LEFT JOIN football_data.player_keeper_stats k ON p.name = k.player
-                LEFT JOIN football_data.player_keeper_adv_stats ka ON p.name = ka.player
-                WHERE pp.position_group = 'goalkeeper'
-                """
-            else:
-                # ALL other positions with ALL tables
-                query = f"""
-                SELECT 
-                    p.id as player_id,
-                    p.name,
-                    p.team,
-                    p.position,
-                    p.age,
-                    pp.percentiles,
-                    -- Standard stats
-                    s.performance_gls,
-                    s.performance_ast,
-                    s.expected_xg,
-                    s.expected_xag,
-                    s.playing_time_90s,
-                    s.performance_crdy,
-                    s.performance_crdr,
-                    -- Shooting
-                    sh.standard_sh,
-                    sh.standard_sot,
-                    -- Passing
-                    ps.total_cmp,
-                    ps.total_att,
-                    ps.total_cmppct,
-                    ps.kp,
-                    ps.prgp,
-                    ps.long_cmp,
-                    -- Creation
-                    gsc.sca_sca,
-                    gsc.gca_gca,
-                    -- Defense (WILL BE AVAILABLE!)
-                    d.tackles_tkl,
-                    d.tackles_tklw,
-                    d.tackles_def_3rd,
-                    d.tackles_att_3rd,
-                    d.int,
-                    d.blocks_blocks,
-                    d.blocks_pass,
-                    d.clr,
-                    d.err,
-                    -- Possession (WILL BE AVAILABLE!)
-                    pos.touches_touches,
-                    pos.touches_def_3rd,
-                    pos.touches_att_3rd,
-                    pos.touches_att_pen,
-                    pos.carries_prgc,
-                    pos.carries_cpa,
-                    pos.carries_1_per_3,
-                    pos.carries_mis,
-                    pos.take_ons_succ,
-                    pos.receiving_rec,
-                    -- Misc (WILL BE AVAILABLE!)
-                    m.performance_fls,
-                    m.performance_og,
-                    m.performance_recov,
-                    m.aerial_duels_won,
-                    m.aerial_duels_wonpct,
-                    m.aerial_duels_lost,
-                    m.challenges_lost
-                FROM football_data.players p
-                JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
-                LEFT JOIN football_data.player_standard_stats s ON p.name = s.player
-                LEFT JOIN football_data.player_shooting_stats sh ON p.name = sh.player
-                LEFT JOIN football_data.player_passing_stats ps ON p.name = ps.player
-                LEFT JOIN football_data.player_goal_shot_creation_stats gsc ON p.name = gsc.player
-                LEFT JOIN football_data.player_defense_stats d ON p.name = d.player
-                LEFT JOIN football_data.player_possession_stats pos ON p.name = pos.player
-                LEFT JOIN football_data.player_misc_stats m ON p.name = m.player
-                WHERE pp.position_group = '{position_group}'
-                """
+            # Build query based on what tables exist
+            base_query = f"""
+            SELECT 
+                p.id as player_id,
+                p.name,
+                p.team,
+                p.position,
+                p.age,
+                pp.percentiles
+            FROM football_data.players p
+            JOIN football_data.player_percentiles_all pp ON p.id = pp.player_id
+            WHERE pp.position_group = '{position_group}'
+            """
             
-            self.df = execute_query(query)
+            self.df = execute_query(base_query)
             
             if self.df.empty:
                 print(f"⚠️ No data found for {self.position}")
+                self.df = pd.DataFrame()
                 return
                 
             print(f"✅ Loaded {len(self.df)} {self.position}s")
-            print(f"Columns: {list(self.df.columns)[:10]}...")
             
-            # FIXED percentiles expansion
+            # Expand percentiles properly
             if 'percentiles' in self.df.columns:
                 import json
                 
-                # Store original length
-                original_length = len(self.df)
+                # Initialize a dictionary to store all percentile data
+                all_percentile_data = {f"{col}_pct": [] for col in self.get_all_metric_columns()}
                 
-                # Create a dictionary to store all percentile data BY INDEX
-                percentile_dict = {}
-                
-                for idx in range(len(self.df)):
-                    row = self.df.iloc[idx]
+                # Process each row
+                for idx, row in self.df.iterrows():
                     try:
-                        if pd.notna(row['percentiles']):
-                            percentiles = json.loads(row['percentiles']) if isinstance(row['percentiles'], str) else row['percentiles']
-                            
-                            if percentiles and isinstance(percentiles, dict):
-                                for key, value in percentiles.items():
-                                    if value is not None:
-                                        col_name = f"{key}_pct"
-                                        if col_name not in percentile_dict:
-                                            percentile_dict[col_name] = {}
-                                        percentile_dict[col_name][idx] = float(value)
+                        percentiles = json.loads(row['percentiles']) if isinstance(row['percentiles'], str) else row['percentiles']
+                        
+                        # Fill in values for each expected column
+                        for col in self.get_all_metric_columns():
+                            pct_col = f"{col}_pct"
+                            if percentiles and col in percentiles:
+                                all_percentile_data[pct_col].append(percentiles[col])
+                            else:
+                                all_percentile_data[pct_col].append(50.0)  # Default value
+                                
                     except Exception as e:
-                        print(f"⚠️ Error parsing percentiles at index {idx}: {e}")
-                        continue
+                        # If error, fill with defaults
+                        for col in self.get_all_metric_columns():
+                            all_percentile_data[f"{col}_pct"].append(50.0)
                 
-                # Create DataFrame from percentile dict with proper index alignment
-                if percentile_dict:
-                    # Fill missing indices with default value (50)
-                    for col_name, col_data in percentile_dict.items():
-                        for idx in range(original_length):
-                            if idx not in col_data:
-                                col_data[idx] = 50.0
-                    
-                    # Convert to DataFrame
-                    percentile_df = pd.DataFrame.from_dict(percentile_dict)
-                    
-                    # Ensure same index
-                    percentile_df.index = self.df.index
-                    
-                    # Drop the percentiles column before concatenating
-                    self.df = self.df.drop(columns=['percentiles'])
-                    
-                    # Concatenate
-                    self.df = pd.concat([self.df, percentile_df], axis=1)
-                    print(f"✅ Added {len(percentile_dict)} percentile columns")
-                else:
-                    print("⚠️ No valid percentile data found")
-                    self.df = self.df.drop(columns=['percentiles'])
-            
-            print(f"Final DataFrame shape: {self.df.shape}")
-            
-            # Verify we have the columns calculate_metric_scores needs
-            required_cols = ['player_id', 'name', 'team', 'position', 'age']
-            missing = [col for col in required_cols if col not in self.df.columns]
-            if missing:
-                print(f"❌ Missing required columns: {missing}")
-            else:
-                print(f"✅ All required columns present")
+                # Create DataFrame from percentile data
+                percentile_df = pd.DataFrame(all_percentile_data)
                 
+                # Drop the percentiles column and concatenate
+                self.df = self.df.drop(columns=['percentiles'])
+                self.df = pd.concat([self.df, percentile_df], axis=1)
+                
+                print(f"✅ Expanded percentiles - DataFrame shape: {self.df.shape}")
+            
         except Exception as e:
             print(f"❌ Error loading {self.position} data: {e}")
             import traceback
             traceback.print_exc()
             self.df = pd.DataFrame()
+
+    def get_all_metric_columns(self):
+        """Get all columns needed for this position's metrics"""
+        all_cols = set()
+        for metric_info in self.metrics.values():
+            all_cols.update(metric_info['columns'])
+        return list(all_cols)
     
     def calculate_metric_scores(self, metric_weights: Dict[str, float]) -> pd.DataFrame:
         """Calculate composite scores for each metric based on user preferences"""
