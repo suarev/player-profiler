@@ -261,27 +261,23 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
 
     // Create zoom behavior
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 8])
-      .on('zoom', (event) => {
-        const { transform } = event
-        setTransform({ k: transform.k, x: transform.x, y: transform.y })
-        
-        // Apply transform to the zoom container
-        zoomContainer.attr('transform', transform.toString())
-      })
+        .scaleExtent([0.5, 8])
+        .on('zoom', (event) => {
+          const { transform } = event;
+          setTransform({ k: transform.k, x: transform.x, y: transform.y });
+          zoomContainer.attr('transform', transform.toString());
+        });
 
-    // Apply zoom to svg
-    svg.call(zoom)
-    
-    // Store zoom reference
-    zoomRef.current = zoom
+      svg.call(zoom);
+      zoomRef.current = zoom;
 
-    // Clear selection on background click
-    svg.on('click', () => setSelectedCluster(null))
+      const handleClick = () => setSelectedCluster(null);
+      svg.on('click', handleClick);
 
-    // Don't auto-focus, let the data show naturally
-
-  }, [data, dimensions, selectedCluster, highlightedPlayers, handleZoom])
+      return () => {
+        svg.on('.zoom', null).on('click', null);  // remove listeners
+      };
+    }, [data, dimensions, selectedCluster, highlightedPlayers, handleZoom]);
 
   if (!data) return null
 
