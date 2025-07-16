@@ -28,8 +28,8 @@ export const useMousePosition = () => {
         const dy = mousePosition.y - prev.y
         
         return {
-          x: prev.x + dx * 0.2,
-          y: prev.y + dy * 0.2
+          x: prev.x + dx * 0.8,
+          y: prev.y + dy * 0.8
         }
       })
       

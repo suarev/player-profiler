@@ -29,7 +29,7 @@ RAW_METRICS = [
 # Percentile metrics to check (these will have _pct suffix)
 PERCENTILE_METRICS = [
     "performance_gls",      # Will check performance_gls percentile
-    "expected_xg",          # Will check expected_xg percentile
+    "expected_npxg",          # Will check expected_xg percentile
     "kp",                   # Will check kp percentile
     "aerial_duels_wonpct",  # Will check aerial_duels_wonpct percentile
 ]
@@ -139,11 +139,17 @@ def check_player_data():
     pct_df = pd.read_sql(pct_query, conn)
     
     if not pct_df.empty:
-        percentiles = json.loads(pct_df.iloc[0]['percentiles'])
+        pct_data = pct_df.iloc[0]['percentiles']
+        # `pct_data` may already be a Python dict when using psycopg2 with a
+        # JSONB column. Only parse JSON if the value is a string.
+        if isinstance(pct_data, str):
+            percentiles = json.loads(pct_data)
+        else:
+            percentiles = pct_data
         position_group = pct_df.iloc[0]['position_group']
-        
+
         print(f"\n📊 Percentiles for {player_name} ({position_group}):")
-        
+            
         # Show requested percentiles
         for metric in PERCENTILE_METRICS:
             if metric in percentiles:
