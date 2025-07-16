@@ -25,20 +25,18 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
 
   // Handle resize
   useEffect(() => {
-    const handleResize = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
-        setDimensions({
-          width: rect.width,
-          height: rect.height
-        })
-      }
-    }
+    const container = containerRef.current
+    if (!container) return
 
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    const observer = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect
+      setDimensions({ width, height })
+    })
+
+    observer.observe(container)
+    return () => observer.disconnect()
   }, [])
+
 
   // Zoom handlers
   const handleZoom = useCallback((direction: 'in' | 'out' | 'reset' | 'focus') => {
