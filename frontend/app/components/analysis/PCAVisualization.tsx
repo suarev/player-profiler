@@ -28,6 +28,9 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
     const container = containerRef.current
     if (!container) return
 
+    const rect = container.getBoundingClientRect()
+    setDimensions({ width: rect.width, height: rect.height })
+
     const observer = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect
       setDimensions({ width, height })

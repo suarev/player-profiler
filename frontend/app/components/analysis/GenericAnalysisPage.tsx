@@ -48,7 +48,6 @@ export default function GenericAnalysisPage({ position, playerCount }: GenericAn
   const [recommendations, setRecommendations] = useState<PlayerRecommendation[]>([])
   const [loading, setLoading] = useState(false)
   const [pcaData, setPcaData] = useState<PCAData | null>(null)
-  const [clusterCount, setClusterCount] = useState<number | null>(null)
 
   const positionInfo = POSITION_INFO[position]
 
@@ -130,11 +129,6 @@ export default function GenericAnalysisPage({ position, playerCount }: GenericAn
     }))
   }
 
-  const handleClusterCountChange = (k: number | null) => {
-    setClusterCount(k)
-    loadPCAData(k || undefined)
-  }
-
   return (
     <div className={`analysis-page position-${position}`}>
       {/* Custom Cursor */}
@@ -209,7 +203,7 @@ export default function GenericAnalysisPage({ position, playerCount }: GenericAn
           <PCAVisualization 
             data={pcaData}
             highlightedPlayers={recommendations.map(r => r.player_id)}
-            onClusterCountChange={handleClusterCountChange}
+            onClusterCountChange={(k) => loadPCAData(k || undefined)}
           />
         </div>
       </div>
