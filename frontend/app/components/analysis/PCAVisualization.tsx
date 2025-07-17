@@ -22,7 +22,10 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> parent of 0bcdd79 (trying to go back to when zoom in/out worked)
   // Handle resize
   useEffect(() => {
     const container = containerRef.current
