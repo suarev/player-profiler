@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useLayoutEffect } from 'react'
 import * as d3 from 'd3'
 import { PCAData } from '@/app/types/analysis'
 
@@ -23,19 +23,18 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
   const [expandedCluster, setExpandedCluster] = useState<string | null>(null)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
 
-  // Handle resize
-  useEffect(() => {
+  // Handle resize - measure after layout to get accurate dimensions
+  useLayoutEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    const rect = container.getBoundingClientRect()
-    setDimensions({ width: rect.width, height: rect.height })
-
-    const observer = new ResizeObserver(entries => {
-      const { width, height } = entries[0].contentRect
+    const update = () => {
+      const { width, height } = container.getBoundingClientRect()
       setDimensions({ width, height })
-    })
+    }
 
+    update()
+    const observer = new ResizeObserver(update)
     observer.observe(container)
     return () => observer.disconnect()
   }, [])
