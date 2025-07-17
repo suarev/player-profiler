@@ -23,23 +23,33 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
   const [expandedCluster, setExpandedCluster] = useState<string | null>(null)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
 
-  // Handle resize
-  // Handle resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
-        setDimensions({
-          width: rect.width,
-          height: rect.height
-        })
+  // Use ResizeObserver instead of window resize event
+  useLayoutEffect(() => {
+    if (!containerRef.current) return
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        if (width > 0 && height > 0) {
+          setDimensions({ width, height })
+        }
       }
+    })
+
+    resizeObserver.observe(containerRef.current)
+
+    // Initial dimension calculation
+    const rect = containerRef.current.getBoundingClientRect()
+    if (rect.width > 0 && rect.height > 0) {
+      setDimensions({
+        width: rect.width,
+        height: rect.height
+      })
     }
 
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-    
+    return () => {
+      resizeObserver.disconnect()
+    }
   }, [])
 
   // Zoom handlers
@@ -63,11 +73,11 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
         svg.transition().duration(500).call(zoomRef.current.transform, d3.zoomIdentity)
         break
     }
-  }, [data, dimensions])
+  }, [data])
 
-  // Main visualization effect
+  // Main visualization effect - add dimensions.height check
   useEffect(() => {
-    if (!data || !svgRef.current || dimensions.width === 0) return
+    if (!data || !svgRef.current || dimensions.width === 0 || dimensions.height === 0) return
 
     const svg = d3.select(svgRef.current)
     svg.selectAll('*').remove()
@@ -77,6 +87,8 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
       .attr('width', dimensions.width)
       .attr('height', dimensions.height)
       .attr('viewBox', `0 0 ${dimensions.width} ${dimensions.height}`)
+      .style('width', '100%')
+      .style('height', '100%')
 
     const margin = { top: 40, right: 40, bottom: 60, left: 60 }
     const width = dimensions.width - margin.left - margin.right
@@ -261,25 +273,25 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
     const highlightedData = data.points.filter(p => highlightedPlayers.includes(p.player_id))
     // No labels, just the highlighted circles which are already styled above
 
-    // Create zoom behavior
+// Create zoom behavior
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-        .scaleExtent([0.5, 8])
-        .on('zoom', (event) => {
-          const { transform } = event;
-          setTransform({ k: transform.k, x: transform.x, y: transform.y });
-          zoomContainer.attr('transform', transform.toString());
-        });
+      .scaleExtent([0.5, 8])
+      .on('zoom', (event) => {
+        const { transform } = event;
+        setTransform({ k: transform.k, x: transform.x, y: transform.y });
+        zoomContainer.attr('transform', transform.toString());
+      });
 
-      svg.call(zoom);
-      zoomRef.current = zoom;
+    svg.call(zoom);
+    zoomRef.current = zoom;
 
-      const handleClick = () => setSelectedCluster(null);
-      svg.on('click', handleClick);
+    const handleClick = () => setSelectedCluster(null);
+    svg.on('click', handleClick);
 
-      return () => {
-        svg.on('.zoom', null).on('click', null);  // remove listeners
-      };
-    }, [data, dimensions, selectedCluster, highlightedPlayers, handleZoom]);
+    return () => {
+      svg.on('.zoom', null).on('click', null);
+    };
+  }, [data, dimensions, selectedCluster, highlightedPlayers])
 
   if (!data) return null
 
