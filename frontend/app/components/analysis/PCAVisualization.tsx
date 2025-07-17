@@ -23,23 +23,19 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
   const [expandedCluster, setExpandedCluster] = useState<string | null>(null)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
 
-  // Handle resize
-  useEffect(() => {
+useEffect(() => {
     const container = containerRef.current
     if (!container) return
-
-    const rect = container.getBoundingClientRect()
-    setDimensions({ width: rect.width, height: rect.height })
 
     const observer = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect
       setDimensions({ width, height })
     })
 
+
     observer.observe(container)
     return () => observer.disconnect()
   }, [])
-
 
   // Zoom handlers
   const handleZoom = useCallback((direction: 'in' | 'out' | 'reset' | 'focus') => {
