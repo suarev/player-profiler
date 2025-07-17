@@ -21,6 +21,29 @@ export default function PCAVisualization({ data, highlightedPlayers, onClusterCo
   const [customClusterCount, setCustomClusterCount] = useState(5)
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
 
+<<<<<<< HEAD
+=======
+  // Handle resize
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const rect = container.getBoundingClientRect()
+    setDimensions({ width: rect.width, height: rect.height })
+
+    const observer = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect
+      setDimensions({ width, height })
+    }
+
+
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [])
+
+>>>>>>> parent of 0bcdd79 (trying to go back to when zoom in/out worked)
   // Zoom handlers
   const handleZoom = useCallback((direction: 'in' | 'out' | 'reset' | 'focus') => {
     if (!svgRef.current || !zoomRef.current || !data) return
