@@ -644,8 +644,7 @@
 
 /* Second Page - Full Screen PCA */
 .second-page {
-    min-height: 100vh;
-    padding: 3rem;
+    height: 100vh;
     display: flex;
     flex-direction: column;
 }
@@ -843,6 +842,7 @@
 /* SVG Canvas */
 .pca-svg {
     width: 100%;
+    height: 100%;
     flex: 1;
     cursor: grab;
     display: block;
